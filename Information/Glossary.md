@@ -1,7 +1,7 @@
 # Glossary
 
 ### Album: 
-A release with 2 or more tracks included6
+A release with 2 or more tracks included
 ### Artist: 
 An individual or group credited as the creator of a recording
 ### C line: 
@@ -19,7 +19,7 @@ Unique Alphanumeric code given to every track to identify it
 ### Lossless: 
 Music that is streamed or downloaded in a format that preserves every detail of the original recording
 ### Major Label: 
-A major label is any label with a significant market share usually being Universal Music Group, Sony Music and Warner Music Group.
+A major label is any label with a significant market share usually being Universal Music Group, Sony Music and Warner Music Group
 ### Metadata: 
 A collection of information embedded into a digital music file that contains information about the album or track such as track title, artist, and album name
 ### P line: 
@@ -31,7 +31,7 @@ Supports the artists in the creation distribution marketing and monetisation of 
 ### Rightsholder: 
 An individual or entity that owns or controls the legal rights to a musical work
 ### Territory: 
-A geographical area that defines where specific music rights and licenses apply.
+A geographical area that defines where specific music rights and licenses apply
 
 
 
@@ -41,4 +41,5 @@ A geographical area that defines where specific music rights and licenses apply.
 ## References
 https://artists.spotify.com/en/blog/glossary-of-music-industry-terms
 https://identitymusic.com/blog/a-guide-to-music-terminology
+
 
