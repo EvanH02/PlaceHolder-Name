@@ -21,3 +21,7 @@ Hash Tables/Maps for fast lookup of audio content, and graph logic for reccomend
 ## Examples of Music Streaming Apps 
 
 
+
+## 5 questions 
+
+
