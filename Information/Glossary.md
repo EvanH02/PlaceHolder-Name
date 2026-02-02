@@ -30,6 +30,8 @@ Provides support for songwriters and composers to manage protect and monetise th
 Supports the artists in the creation distribution marketing and monetisation of their recordings(the audio itself)
 ### Rightsholder: 
 An individual or entity that owns or controls the legal rights to a musical work
+### Track Linking:
+The process of connecting different versions of the same track such as a remaster or rerelease with the original to preserve streaming statistics
 ### Territory: 
 A geographical area that defines where specific music rights and licenses apply
 
@@ -41,5 +43,6 @@ A geographical area that defines where specific music rights and licenses apply
 ## References
 https://artists.spotify.com/en/blog/glossary-of-music-industry-terms
 https://identitymusic.com/blog/a-guide-to-music-terminology
+
 
 
