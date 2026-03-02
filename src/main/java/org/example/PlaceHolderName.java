@@ -7,12 +7,12 @@ import java.io.File;
 import java.net.URL;
 
 
-public class ResourceView extends JFrame {
+public class PlaceHolderName extends JFrame {
 
-    public ResourceView() {
+    public PlaceHolderName() {
         // window settings
         this.setDefaultCloseOperation(EXIT_ON_CLOSE);
-        this.setTitle("Resource View");
+        this.setTitle("PlaceHolder Name");
         this.setSize(400, 300);
 
         // JPanel containing the JTree
@@ -72,7 +72,7 @@ public class ResourceView extends JFrame {
 
 
     public static void main(String[] args) {
-        ResourceView resourceView = new ResourceView();
-        resourceView.setVisible(true);
+        PlaceHolderName placeHolderName = new PlaceHolderName();
+        placeHolderName.setVisible(true);
     }
 }
