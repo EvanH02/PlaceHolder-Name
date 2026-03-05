@@ -3,8 +3,14 @@ package org.example;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 
 
 public class PlaceHolderName extends JFrame {
@@ -14,6 +20,22 @@ public class PlaceHolderName extends JFrame {
         this.setDefaultCloseOperation(EXIT_ON_CLOSE);
         this.setTitle("PlaceHolder Name");
         this.setSize(400, 300);
+        //menubar containing the Add song/playlisy
+        JMenuBar menuBar= new JMenuBar();
+        JMenuItem addSong= new JMenuItem("Add Song");
+        addSong.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                addSong();
+            }
+        });
+
+        menuBar.add(addSong);
+        JMenuItem newPlaylist= new JMenuItem("Add Playlist");
+        menuBar.add(addSong);
+        menuBar.add(newPlaylist);
+        this.add(menuBar, BorderLayout.PAGE_START);
+
 
         // JPanel containing the JTree
         JPanel treePanel = new JPanel();
@@ -69,7 +91,36 @@ public class PlaceHolderName extends JFrame {
 
         return node;
     }
+private void addSong() {
 
+    JFileChooser addSongFile = new JFileChooser();
+
+    int result = addSongFile.showOpenDialog(null);
+      //System.out.println(currentPlaylist.getAbsolutePath());
+    if (result == JFileChooser.APPROVE_OPTION) {
+
+        File selectedFile = addSongFile.getSelectedFile();
+
+        // Destination folder
+        Path destinationFolder = Path.of("src/main/resources/Playlist 1");
+
+        // Create the final path (folder + filename)
+        Path destinationFile =  destinationFolder.resolve(selectedFile.getName());
+
+        try {
+            Files.copy(
+                    selectedFile.toPath(),
+                    destinationFile,
+                    StandardCopyOption.REPLACE_EXISTING
+            );
+
+            System.out.println("song added");
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
 
     public static void main(String[] args) {
         PlaceHolderName placeHolderName = new PlaceHolderName();

@@ -2,6 +2,7 @@ package org.example;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.io.File;
 
 public class Playlist {
     private String name;
@@ -35,5 +36,13 @@ public class Playlist {
     @Override
     public String toString() {
         return name;
+    }
+    public void WriteCSV(){} //converts song list to csv so each song is an entry
+    //writes to csv
+
+    public void readCSV(File csv){
+        //reads playlist csv into list
+
+
     }
 }
