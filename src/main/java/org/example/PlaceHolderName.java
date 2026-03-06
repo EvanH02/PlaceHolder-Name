@@ -35,6 +35,17 @@ public class PlaceHolderName extends JFrame {
         menuBar.add(addSong);
         menuBar.add(newPlaylist);
         this.add(menuBar, BorderLayout.PAGE_START);
+        //Admin can remove songs
+        JMenuItem removeSong= new JMenuItem("Remove Song");
+        removeSong.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                System.out.println("aaaaaaa");
+                removeSong();
+            }
+        });
+
+        menuBar.add(removeSong);
 
 
         // JPanel containing the JTree
@@ -91,36 +102,63 @@ public class PlaceHolderName extends JFrame {
 
         return node;
     }
-private void addSong() {
+    private void addSong() {
 
-    JFileChooser addSongFile = new JFileChooser();
+        JFileChooser addSongFile = new JFileChooser();
 
-    int result = addSongFile.showOpenDialog(null);
-      //System.out.println(currentPlaylist.getAbsolutePath());
-    if (result == JFileChooser.APPROVE_OPTION) {
+        int result = addSongFile.showOpenDialog(null);
+        //System.out.println(currentPlaylist.getAbsolutePath());
+        if (result == JFileChooser.APPROVE_OPTION) {
 
-        File selectedFile = addSongFile.getSelectedFile();
+            File selectedFile = addSongFile.getSelectedFile();
 
-        // Destination folder
-        Path destinationFolder = Path.of("src/main/resources/Playlist 1");
+            // Destination folder
+            Path destinationFolder = Path.of("src/main/resources/Playlist 1");
 
-        // Create the final path (folder + filename)
-        Path destinationFile =  destinationFolder.resolve(selectedFile.getName());
+            // Create the final path (folder + filename)
+            Path destinationFile =  destinationFolder.resolve(selectedFile.getName());
 
-        try {
-            Files.copy(
-                    selectedFile.toPath(),
-                    destinationFile,
-                    StandardCopyOption.REPLACE_EXISTING
-            );
+            try {
+                Files.copy(
+                        selectedFile.toPath(),
+                        destinationFile,
+                        StandardCopyOption.REPLACE_EXISTING
+                );
 
-            System.out.println("song added");
+                System.out.println("song added");
 
-        } catch (IOException e) {
-            e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
-}
+    private void removeSong() {
+
+        JFileChooser removeSongFile = new JFileChooser();
+        JOptionPane removeConfirm = new JOptionPane();
+
+        JOptionPane.showMessageDialog(getParent(), "This action will DELETE song?", "Dialog Title", JOptionPane.WARNING_MESSAGE);
+
+        // Set the chooser to open in the playlist folder
+        removeSongFile.setCurrentDirectory(new File("src/main/resources/Playlist 1"));
+
+        int result = removeSongFile.showDialog(getParent(),"DELETE");
+
+
+        if (result == JFileChooser.APPROVE_OPTION) {
+
+
+            File selectedFile = removeSongFile.getSelectedFile();
+
+            try {
+                Files.deleteIfExists(selectedFile.toPath());
+                System.out.println("song removed");
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 
     public static void main(String[] args) {
         PlaceHolderName placeHolderName = new PlaceHolderName();
