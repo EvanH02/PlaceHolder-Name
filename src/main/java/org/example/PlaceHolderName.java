@@ -7,15 +7,19 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 
 
 public class PlaceHolderName extends JFrame {
+    ArrayList<Playlist> playlists= new ArrayList();
 
     public PlaceHolderName() {
+        //on start loads the playlists
         // window settings
         this.setDefaultCloseOperation(EXIT_ON_CLOSE);
         this.setTitle("PlaceHolder Name");
@@ -32,6 +36,14 @@ public class PlaceHolderName extends JFrame {
 
         menuBar.add(addSong);
         JMenuItem newPlaylist= new JMenuItem("Add Playlist");
+        newPlaylist.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                createPlaylist();
+                                          }
+                                      }
+
+        );
         menuBar.add(addSong);
         menuBar.add(newPlaylist);
         this.add(menuBar, BorderLayout.PAGE_START);
@@ -137,7 +149,7 @@ public class PlaceHolderName extends JFrame {
         JFileChooser removeSongFile = new JFileChooser();
         JOptionPane removeConfirm = new JOptionPane();
 
-        JOptionPane.showMessageDialog(getParent(), "This action will DELETE song?", "Dialog Title", JOptionPane.WARNING_MESSAGE);
+        JOptionPane.showMessageDialog(getParent(), "This action will DELETE song", "Dialog Title", JOptionPane.WARNING_MESSAGE);
 
         // Set the chooser to open in the playlist folder
         removeSongFile.setCurrentDirectory(new File("src/main/resources/Playlist 1"));
@@ -159,7 +171,22 @@ public class PlaceHolderName extends JFrame {
             }
         }
     }
+    private void createPlaylist(){
+        String name = JOptionPane.showInputDialog("Enter playlist name:");
+        //change this later to its own folder
+        File newplaylist = new File(
+                System.getProperty("user.dir") + "/src/main/resources/Playlist 1/" + name
+        );
+        if (newplaylist.mkdirs()) {
+            System.out.println("Created: " + newplaylist.getAbsolutePath());
+        } else {
+            System.out.println("Folder already exists or failed.");
+        }
+        System.out.println(System.getProperty("user.dir")+"src/main/resources/Playlist 1/"+name);
 
+
+
+    }
     public static void main(String[] args) {
         PlaceHolderName placeHolderName = new PlaceHolderName();
         placeHolderName.setVisible(true);
