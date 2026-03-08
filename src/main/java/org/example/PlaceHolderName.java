@@ -2,34 +2,28 @@ package org.example;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
-import java.util.List;
+
 
 public class PlaceHolderName extends JFrame {
     ArrayList<Playlist> playlists= new ArrayList();
-
-    // the search components
-    private JTextField searchField;
-    private DefaultListModel<String> searchResultsModel;
-    private JList<String> searchResultsList;
 
     public PlaceHolderName() {
         //on start loads the playlists
         // window settings
         this.setDefaultCloseOperation(EXIT_ON_CLOSE);
         this.setTitle("PlaceHolder Name");
-        this.setSize(500, 400);
-
+        this.setSize(400, 300);
         //menubar containing the Add song/playlisy
         JMenuBar menuBar= new JMenuBar();
         JMenuItem addSong= new JMenuItem("Add Song");
@@ -43,28 +37,15 @@ public class PlaceHolderName extends JFrame {
         menuBar.add(addSong);
         JMenuItem newPlaylist= new JMenuItem("Add Playlist");
         newPlaylist.addActionListener(new ActionListener() {
-                                          @Override
-                                          public void actionPerformed(ActionEvent e) {
-                                              createPlaylist();
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                createPlaylist();
                                           }
                                       }
 
         );
         menuBar.add(addSong);
         menuBar.add(newPlaylist);
-
-        // Add Search menu
-        JMenu searchMenu = new JMenu("Search");
-        JMenuItem searchItem = new JMenuItem("Find Song");
-        searchItem.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                showSearchDialog();
-            }
-        });
-        searchMenu.add(searchItem);
-        menuBar.add(searchMenu);
-
         this.add(menuBar, BorderLayout.PAGE_START);
         //Admin can remove songs
         JMenuItem removeSong= new JMenuItem("Remove Song");
@@ -90,104 +71,6 @@ public class PlaceHolderName extends JFrame {
         treePanel.add(treeScrollPane, BorderLayout.CENTER);
         this.add(treePanel, BorderLayout.CENTER);
 
-    }
-
-    // the search dialog method
-    private void showSearchDialog() {
-        JDialog searchDialog = new JDialog(this, "Search Songs", true);
-        searchDialog.setSize(250, 300);
-        searchDialog.setLocationRelativeTo(this);
-
-        JPanel panel = new JPanel(new BorderLayout(5, 5));
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-
-        // Search input
-        JPanel inputPanel = new JPanel(new BorderLayout(5, 5));
-        searchField = new JTextField();
-        JButton searchBtn = new JButton("Search");
-        inputPanel.add(searchField, BorderLayout.CENTER);
-        inputPanel.add(searchBtn, BorderLayout.EAST);
-
-        // Results list
-        searchResultsModel = new DefaultListModel<>();
-        searchResultsList = new JList<>(searchResultsModel);
-        searchResultsList.setFont(new Font("Monospaced", Font.PLAIN, 12));
-        JScrollPane scrollPane = new JScrollPane(searchResultsList);
-        scrollPane.setBorder(BorderFactory.createTitledBorder("Results"));
-
-        // Close button
-        JButton closeBtn = new JButton("Close");
-        closeBtn.addActionListener(e -> searchDialog.dispose());
-
-        JPanel bottomPanel = new JPanel();
-        bottomPanel.add(closeBtn);
-
-        panel.add(inputPanel, BorderLayout.NORTH);
-        panel.add(scrollPane, BorderLayout.CENTER);
-        panel.add(bottomPanel, BorderLayout.SOUTH);
-
-        searchDialog.add(panel);
-
-        // Search action
-        searchBtn.addActionListener(e -> performSearch());
-        searchField.addActionListener(e -> performSearch());
-
-        // Double click on result
-        searchResultsList.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                if (evt.getClickCount() == 2) {
-                    String selected = searchResultsList.getSelectedValue();
-                    if (selected != null && !selected.equals("No results found")) {
-                        JOptionPane.showMessageDialog(searchDialog, "Selected: " + selected);
-                    }
-                }
-            }
-        });
-
-        searchDialog.setVisible(true);
-    }
-
-    // this performs search method
-    private void performSearch() {
-        String searchText = searchField.getText().trim().toLowerCase();
-        if (searchText.isEmpty()) {
-            return;
-        }
-
-        searchResultsModel.clear();
-
-        DefaultMutableTreeNode root = buildResourceTree("Playlist 1");
-        List<String> results = new ArrayList<>();
-        searchInNode(root, searchText, results);
-
-        for (String result : results) {
-            searchResultsModel.addElement(result);
-        }
-
-        if (results.isEmpty()) {
-            searchResultsModel.addElement("No results found");
-        }
-    }
-
-    // this is a recursive search method
-    private void searchInNode(DefaultMutableTreeNode node, String searchText, List<String> results) {
-        Object userObject = node.getUserObject();
-
-        if (userObject instanceof Song) {
-            Song song = (Song) userObject;
-            if (song.getTitle().toLowerCase().contains(searchText)) {
-                results.add("🎵 " + song.getTitle());
-            }
-        } else if (userObject instanceof Playlist) {
-            Playlist playlist = (Playlist) userObject;
-            if (playlist.getName().toLowerCase().contains(searchText)) {
-                results.add("📁 " + playlist.getName());
-            }
-        }
-
-        for (int i = 0; i < node.getChildCount(); i++) {
-            searchInNode((DefaultMutableTreeNode) node.getChildAt(i), searchText, results);
-        }
     }
 
 
