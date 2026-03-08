@@ -7,26 +7,51 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.List;
+
+
 
 
 public class PlaceHolderName extends JFrame {
-    ArrayList<Playlist> playlists= new ArrayList();
+    ArrayList<Playlist> playlists = new ArrayList();
+    private JTextField searchField;
+    private DefaultListModel<String> searchResultsModel;
+    private JList<String> searchResultsList;
+
+
 
     public PlaceHolderName() {
         //on start loads the playlists
         // window settings
         this.setDefaultCloseOperation(EXIT_ON_CLOSE);
         this.setTitle("PlaceHolder Name");
-        this.setSize(400, 300);
+        this.setSize(500, 400);
         //menubar containing the Add song/playlisy
-        JMenuBar menuBar= new JMenuBar();
-        JMenuItem addSong= new JMenuItem("Add Song");
+        JMenuBar menuBar = new JMenuBar();
+        JMenu searchMenu = new JMenu("Search");
+        JMenuItem searchItem = new JMenuItem("Find Song:");
+        searchItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                showSearchDialog();
+            }
+        });
+        searchMenu.add(searchItem);
+        menuBar.add(searchMenu);
+
+
+
+
+
+
+
+
+        JMenuItem addSong = new JMenuItem("Add Song");
         addSong.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -35,11 +60,11 @@ public class PlaceHolderName extends JFrame {
         });
 
         menuBar.add(addSong);
-        JMenuItem newPlaylist= new JMenuItem("Add Playlist");
+        JMenuItem newPlaylist = new JMenuItem("Add Playlist");
         newPlaylist.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                createPlaylist();
+                                          @Override
+                                          public void actionPerformed(ActionEvent e) {
+                                              createPlaylist();
                                           }
                                       }
 
@@ -48,7 +73,7 @@ public class PlaceHolderName extends JFrame {
         menuBar.add(newPlaylist);
         this.add(menuBar, BorderLayout.PAGE_START);
         //Admin can remove songs
-        JMenuItem removeSong= new JMenuItem("Remove Song");
+        JMenuItem removeSong = new JMenuItem("Remove Song");
         removeSong.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -73,122 +98,221 @@ public class PlaceHolderName extends JFrame {
 
     }
 
+    private void showSearchDialog() {
+        JDialog searchDialog = new JDialog(this, "Search Songs", true);
+        searchDialog.setSize(350, 400);
+        searchDialog.setLocationRelativeTo(this);
 
-    public DefaultMutableTreeNode buildResourceTree(String folderName) {
-        ClassLoader classLoader = this.getClass().getClassLoader();
-        URL resource = classLoader.getResource(folderName);
+        JPanel panel = new JPanel(new BorderLayout(5, 5));
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        if (resource == null) {
-            throw new IllegalArgumentException("Folder not found: " + folderName);
-        }
+        //the search input
+        JPanel inputPanel = new JPanel(new BorderLayout(5, 5));
+        searchField = new JTextField();
+        JButton searchBtn = new JButton("Search");
+        inputPanel.add(searchField, BorderLayout.CENTER);
+        inputPanel.add(searchBtn, BorderLayout.EAST);
 
-        File folder;
-        try {
-            folder = new File(resource.toURI());
-        } catch (Exception e) {
-            throw new RuntimeException("Error accessing folder: " + folderName, e);
-        }
+        //the results list
+        searchResultsModel = new DefaultListModel<>();
+        searchResultsList = new JList<>(searchResultsModel);
+        searchResultsList.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        JScrollPane scrollPane = new JScrollPane(searchResultsList);
+        scrollPane.setBorder(BorderFactory.createTitledBorder("Results"));
 
-        if (!folder.exists() || !folder.isDirectory()) {
-            throw new IllegalArgumentException("Invalid folder: " + folderName);
-        }
+        //close button
+        JButton closeBtn = new JButton("Close");
+        closeBtn.addActionListener(e -> searchDialog.dispose());
+        JPanel bottomPanel = new JPanel();
+        bottomPanel.add(closeBtn);
 
-        return buildTreeNode(folder);
-    }
+        panel.add(inputPanel, BorderLayout.NORTH);
+        panel.add(scrollPane, BorderLayout.CENTER);
+        panel.add(bottomPanel, BorderLayout.SOUTH);
 
-    private DefaultMutableTreeNode buildTreeNode(File folder) {
-        Playlist playlist = new Playlist(folder.getName());
-        DefaultMutableTreeNode node = new DefaultMutableTreeNode(playlist);
-        File[] files = folder.listFiles();
-        if(files!= null){
-            for(File file: files){
-                if(file.isDirectory()){
-                    node.add(buildTreeNode(file));
-                } else {
-                    Song song = new Song(file.getName(), file.getAbsolutePath());
-                    playlist.addSong(song);
-                    node.add(new DefaultMutableTreeNode(song));
+        searchDialog.add(panel);
+
+        //the searchh action
+        searchBtn.addActionListener(e -> performSearch());
+        searchField.addActionListener(e -> performSearch());
+
+        //double click
+        searchResultsList.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                if (evt.getClickCount() == 2) {
+                    String selected = searchResultsList.getSelectedValue();
+                    if (selected != null && !selected.equals("No results found")) {
+                        JOptionPane.showMessageDialog(searchDialog, "Selected: " + selected);
+                    }
                 }
             }
+        });
+
+        searchDialog.setVisible(true);
+    }
+
+    //perform search method
+    private void performSearch() {
+        String searchText = searchField.getText().trim().toLowerCase();
+        if (searchText.isEmpty()) {
+            return;
         }
 
-        return node;
+        searchResultsModel.clear();
+
+        DefaultMutableTreeNode root = buildResourceTree("Playlist 1");
+        List<String> results = new ArrayList<>();
+        searchInNode(root, searchText, results);
+        for (String result : results) {
+            searchResultsModel.addElement(result);
+        }
+
+        if (results.isEmpty()) {
+            searchResultsModel.addElement("No results found");
+        }
     }
-    private void addSong() {
 
-        JFileChooser addSongFile = new JFileChooser();
+    //recursive method
+    private void searchInNode(DefaultMutableTreeNode node, String searchText, List<String> results) {
+        Object userObject = node.getUserObject();
 
-        int result = addSongFile.showOpenDialog(null);
-        //System.out.println(currentPlaylist.getAbsolutePath());
-        if (result == JFileChooser.APPROVE_OPTION) {
+        if (userObject instanceof Song) {
+            Song song = (Song) userObject;
+            if (song.getTitle().toLowerCase().contains(searchText)) {
+                results.add("🎵 " + song.getTitle());
+            }
+        } else if (userObject instanceof Playlist) {
+            Playlist playlist = (Playlist) userObject;
+            if (playlist.getName().toLowerCase().contains(searchText)) {
+                results.add("📁 " + playlist.getName());
+            }
+        }
 
-            File selectedFile = addSongFile.getSelectedFile();
+        for (int i = 0; i < node.getChildCount(); i++) {
+            searchInNode((DefaultMutableTreeNode) node.getChildAt(i), searchText, results);
+        }
+    }
 
-            // Destination folder
-            Path destinationFolder = Path.of("src/main/resources/Playlist 1");
 
-            // Create the final path (folder + filename)
-            Path destinationFile =  destinationFolder.resolve(selectedFile.getName());
 
-            try {
-                Files.copy(
-                        selectedFile.toPath(),
-                        destinationFile,
-                        StandardCopyOption.REPLACE_EXISTING
+
+
+    public DefaultMutableTreeNode buildResourceTree (String folderName){
+                ClassLoader classLoader = this.getClass().getClassLoader();
+                URL resource = classLoader.getResource(folderName);
+
+                if (resource == null) {
+                    throw new IllegalArgumentException("Folder not found: " + folderName);
+                }
+
+                File folder;
+                try {
+                    folder = new File(resource.toURI());
+                } catch (Exception e) {
+                    throw new RuntimeException("Error accessing folder: " + folderName, e);
+                }
+
+                if (!folder.exists() || !folder.isDirectory()) {
+                    throw new IllegalArgumentException("Invalid folder: " + folderName);
+                }
+
+                return buildTreeNode(folder);
+            }
+
+            private DefaultMutableTreeNode buildTreeNode (File folder){
+                Playlist playlist = new Playlist(folder.getName());
+                DefaultMutableTreeNode node = new DefaultMutableTreeNode(playlist);
+                File[] files = folder.listFiles();
+                if (files != null) {
+                    for (File file : files) {
+                        if (file.isDirectory()) {
+                            node.add(buildTreeNode(file));
+                        } else {
+                            Song song = new Song(file.getName(), file.getAbsolutePath());
+                            playlist.addSong(song);
+                            node.add(new DefaultMutableTreeNode(song));
+                        }
+                    }
+                }
+
+                return node;
+            }
+            private void addSong () {
+
+                JFileChooser addSongFile = new JFileChooser();
+
+                int result = addSongFile.showOpenDialog(null);
+                //System.out.println(currentPlaylist.getAbsolutePath());
+                if (result == JFileChooser.APPROVE_OPTION) {
+
+                    File selectedFile = addSongFile.getSelectedFile();
+
+                    // Destination folder
+                    Path destinationFolder = Path.of("src/main/resources/Playlist 1");
+
+                    // Create the final path (folder + filename)
+                    Path destinationFile = destinationFolder.resolve(selectedFile.getName());
+
+                    try {
+                        Files.copy(
+                                selectedFile.toPath(),
+                                destinationFile,
+                                StandardCopyOption.REPLACE_EXISTING
+                        );
+
+                        System.out.println("song added");
+
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+            private void removeSong () {
+
+                JFileChooser removeSongFile = new JFileChooser();
+                JOptionPane removeConfirm = new JOptionPane();
+
+                JOptionPane.showMessageDialog(getParent(), "This action will DELETE song", "Dialog Title", JOptionPane.WARNING_MESSAGE);
+
+                // Set the chooser to open in the playlist folder
+                removeSongFile.setCurrentDirectory(new File("src/main/resources/Playlist 1"));
+
+                int result = removeSongFile.showDialog(getParent(), "DELETE");
+
+
+                if (result == JFileChooser.APPROVE_OPTION) {
+
+
+                    File selectedFile = removeSongFile.getSelectedFile();
+
+                    try {
+                        Files.deleteIfExists(selectedFile.toPath());
+                        System.out.println("song removed");
+
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+            private void createPlaylist () {
+                String name = JOptionPane.showInputDialog("Enter playlist name:");
+                //change this later to its own folder
+                File newplaylist = new File(
+                        System.getProperty("user.dir") + "/src/main/resources/Playlist 1/" + name
                 );
+                if (newplaylist.mkdirs()) {
+                    System.out.println("Created: " + newplaylist.getAbsolutePath());
+                } else {
+                    System.out.println("Folder already exists or failed.");
+                }
+                System.out.println(System.getProperty("user.dir") + "src/main/resources/Playlist 1/" + name);
 
-                System.out.println("song added");
 
-            } catch (IOException e) {
-                e.printStackTrace();
+            }
+            public static void main(String[] args) {
+                PlaceHolderName placeHolderName = new PlaceHolderName();
+                placeHolderName.setVisible(true);
             }
         }
-    }
-    private void removeSong() {
-
-        JFileChooser removeSongFile = new JFileChooser();
-        JOptionPane removeConfirm = new JOptionPane();
-
-        JOptionPane.showMessageDialog(getParent(), "This action will DELETE song", "Dialog Title", JOptionPane.WARNING_MESSAGE);
-
-        // Set the chooser to open in the playlist folder
-        removeSongFile.setCurrentDirectory(new File("src/main/resources/Playlist 1"));
-
-        int result = removeSongFile.showDialog(getParent(),"DELETE");
 
 
-        if (result == JFileChooser.APPROVE_OPTION) {
-
-
-            File selectedFile = removeSongFile.getSelectedFile();
-
-            try {
-                Files.deleteIfExists(selectedFile.toPath());
-                System.out.println("song removed");
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-    private void createPlaylist(){
-        String name = JOptionPane.showInputDialog("Enter playlist name:");
-        //change this later to its own folder
-        File newplaylist = new File(
-                System.getProperty("user.dir") + "/src/main/resources/Playlist 1/" + name
-        );
-        if (newplaylist.mkdirs()) {
-            System.out.println("Created: " + newplaylist.getAbsolutePath());
-        } else {
-            System.out.println("Folder already exists or failed.");
-        }
-        System.out.println(System.getProperty("user.dir")+"src/main/resources/Playlist 1/"+name);
-
-
-
-    }
-    public static void main(String[] args) {
-        PlaceHolderName placeHolderName = new PlaceHolderName();
-        placeHolderName.setVisible(true);
-    }
-}
