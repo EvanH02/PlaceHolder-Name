@@ -2,12 +2,13 @@ package org.example;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeCellRenderer;
+import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -22,6 +23,9 @@ public class PlaceHolderName extends JFrame {
     private JTextField searchField;
     private DefaultListModel<String> searchResultsModel;
     private JList<String> searchResultsList;
+    private JTree tree;
+    private DefaultMutableTreeNode rootNode;
+    private DefaultTreeModel treeModel;
 
 
 
@@ -29,7 +33,7 @@ public class PlaceHolderName extends JFrame {
         //on start loads the playlists
         // window settings
         this.setDefaultCloseOperation(EXIT_ON_CLOSE);
-        this.setTitle("PlaceHolder Name");
+        this.setTitle("PlaceHolderName");
         this.setSize(500, 400);
         //menubar containing the Add song/playlisy
         JMenuBar menuBar = new JMenuBar();
@@ -90,8 +94,28 @@ public class PlaceHolderName extends JFrame {
         treePanel.setLayout(new BorderLayout());
 
         // create JTree from resource folder
-        DefaultMutableTreeNode root = buildResourceTree("Playlist 1");
-        JTree tree = new JTree(root);
+        rootNode = buildResourceTree("PlaceHolder Name Songs");
+        treeModel = new DefaultTreeModel(rootNode, true);
+        tree = new JTree(treeModel);
+
+        // playlists get folder icon, songs get file icon
+        tree.setCellRenderer(new DefaultTreeCellRenderer() {
+            @Override
+            public Component getTreeCellRendererComponent(JTree tree, Object value,
+                    boolean sel, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+                super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
+                if (value instanceof DefaultMutableTreeNode) {
+                    Object userObj = ((DefaultMutableTreeNode) value).getUserObject();
+                    if (userObj instanceof Playlist) {
+                        setIcon(expanded ? getOpenIcon() : getClosedIcon());
+                    } else if (userObj instanceof Song) {
+                        setIcon(getLeafIcon());
+                    }
+                }
+                return this;
+            }
+        });
+
         JScrollPane treeScrollPane = new JScrollPane(tree);
         treePanel.add(treeScrollPane, BorderLayout.CENTER);
         this.add(treePanel, BorderLayout.CENTER);
@@ -160,7 +184,7 @@ public class PlaceHolderName extends JFrame {
 
         searchResultsModel.clear();
 
-        DefaultMutableTreeNode root = buildResourceTree("Playlist 1");
+        DefaultMutableTreeNode root = buildResourceTree("PlaceHolder Name Songs");
         List<String> results = new ArrayList<>();
         searchInNode(root, searchText, results);
         for (String result : results) {
@@ -197,23 +221,21 @@ public class PlaceHolderName extends JFrame {
 
 
 
+    private void refreshTree() {
+        rootNode = buildResourceTree("PlaceHolder Name Songs");
+        treeModel.setRoot(rootNode);
+        treeModel.reload();
+        // expand all nodes
+        for (int i = 0; i < tree.getRowCount(); i++) {
+            tree.expandRow(i);
+        }
+    }
+
     public DefaultMutableTreeNode buildResourceTree (String folderName){
-                ClassLoader classLoader = this.getClass().getClassLoader();
-                URL resource = classLoader.getResource(folderName);
-
-                if (resource == null) {
-                    throw new IllegalArgumentException("Folder not found: " + folderName);
-                }
-
-                File folder;
-                try {
-                    folder = new File(resource.toURI());
-                } catch (Exception e) {
-                    throw new RuntimeException("Error accessing folder: " + folderName, e);
-                }
+                File folder = new File("src/main/resources/" + folderName);
 
                 if (!folder.exists() || !folder.isDirectory()) {
-                    throw new IllegalArgumentException("Invalid folder: " + folderName);
+                    throw new IllegalArgumentException("Folder not found: " + folderName);
                 }
 
                 return buildTreeNode(folder);
@@ -222,6 +244,7 @@ public class PlaceHolderName extends JFrame {
             private DefaultMutableTreeNode buildTreeNode (File folder){
                 Playlist playlist = new Playlist(folder.getName());
                 DefaultMutableTreeNode node = new DefaultMutableTreeNode(playlist);
+                node.setAllowsChildren(true);
                 File[] files = folder.listFiles();
                 if (files != null) {
                     for (File file : files) {
@@ -230,7 +253,9 @@ public class PlaceHolderName extends JFrame {
                         } else {
                             Song song = new Song(file.getName(), file.getAbsolutePath());
                             playlist.addSong(song);
-                            node.add(new DefaultMutableTreeNode(song));
+                            DefaultMutableTreeNode songNode = new DefaultMutableTreeNode(song);
+                            songNode.setAllowsChildren(false);
+                            node.add(songNode);
                         }
                     }
                 }
@@ -248,7 +273,7 @@ public class PlaceHolderName extends JFrame {
                     File selectedFile = addSongFile.getSelectedFile();
 
                     // Destination folder
-                    Path destinationFolder = Path.of("src/main/resources/Playlist 1");
+                    Path destinationFolder = Path.of("src/main/resources/PlaceHolder Name Songs");
 
                     // Create the final path (folder + filename)
                     Path destinationFile = destinationFolder.resolve(selectedFile.getName());
@@ -261,6 +286,7 @@ public class PlaceHolderName extends JFrame {
                         );
 
                         System.out.println("song added");
+                        refreshTree();
 
                     } catch (IOException e) {
                         e.printStackTrace();
@@ -271,11 +297,10 @@ public class PlaceHolderName extends JFrame {
 
                 JFileChooser removeSongFile = new JFileChooser();
                 JOptionPane removeConfirm = new JOptionPane();
-
                 JOptionPane.showMessageDialog(getParent(), "This action will DELETE song", "Dialog Title", JOptionPane.WARNING_MESSAGE);
 
                 // Set the chooser to open in the playlist folder
-                removeSongFile.setCurrentDirectory(new File("src/main/resources/Playlist 1"));
+                removeSongFile.setCurrentDirectory(new File("src/main/resources/PlaceHolder Name Songs"));
 
                 int result = removeSongFile.showDialog(getParent(), "DELETE");
 
@@ -288,6 +313,7 @@ public class PlaceHolderName extends JFrame {
                     try {
                         Files.deleteIfExists(selectedFile.toPath());
                         System.out.println("song removed");
+                        refreshTree();
 
                     } catch (IOException e) {
                         e.printStackTrace();
@@ -298,14 +324,15 @@ public class PlaceHolderName extends JFrame {
                 String name = JOptionPane.showInputDialog("Enter playlist name:");
                 //change this later to its own folder
                 File newplaylist = new File(
-                        System.getProperty("user.dir") + "/src/main/resources/Playlist 1/" + name
+                        System.getProperty("user.dir") + "/src/main/resources/PlaceHolder Name Songs/" + name
                 );
                 if (newplaylist.mkdirs()) {
                     System.out.println("Created: " + newplaylist.getAbsolutePath());
+                    refreshTree();
                 } else {
                     System.out.println("Folder already exists or failed.");
                 }
-                System.out.println(System.getProperty("user.dir") + "src/main/resources/Playlist 1/" + name);
+                System.out.println(System.getProperty("user.dir") + "src/main/resources/PlaceHolder Name Songs/" + name);
 
 
             }
