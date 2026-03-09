@@ -267,16 +267,41 @@ public class PlaceHolderName extends JFrame {
                 JFileChooser addSongFile = new JFileChooser();
 
                 int result = addSongFile.showOpenDialog(null);
-                //System.out.println(currentPlaylist.getAbsolutePath());
                 if (result == JFileChooser.APPROVE_OPTION) {
 
                     File selectedFile = addSongFile.getSelectedFile();
 
-                    // Destination folder
-                    Path destinationFolder = Path.of("src/main/resources/PlaceHolder Name Songs");
+                    // Build list of available playlists
+                    File rootFolder = new File("src/main/resources/PlaceHolder Name Songs");
+                    List<File> playlistFolders = new ArrayList<>();
+                    playlistFolders.add(rootFolder);
+                    collectSubfolders(rootFolder, playlistFolders);
 
-                    // Create the final path (folder + filename)
-                    Path destinationFile = destinationFolder.resolve(selectedFile.getName());
+                    String[] playlistNames = playlistFolders.stream()
+                            .map(File::getName)
+                            .toArray(String[]::new);
+
+                    String chosen = (String) JOptionPane.showInputDialog(
+                            this,
+                            "Select a playlist to add the song to:",
+                            "Choose Playlist",
+                            JOptionPane.QUESTION_MESSAGE,
+                            null,
+                            playlistNames,
+                            playlistNames[0]
+                    );
+
+                    if (chosen == null) {
+                        return; // user cancelled
+                    }
+
+                    // Find the matching folder
+                    File destinationFolder = playlistFolders.stream()
+                            .filter(f -> f.getName().equals(chosen))
+                            .findFirst()
+                            .orElse(rootFolder);
+
+                    Path destinationFile = destinationFolder.toPath().resolve(selectedFile.getName());
 
                     try {
                         Files.copy(
@@ -285,11 +310,23 @@ public class PlaceHolderName extends JFrame {
                                 StandardCopyOption.REPLACE_EXISTING
                         );
 
-                        System.out.println("song added");
+                        System.out.println("song added to " + chosen);
                         refreshTree();
 
                     } catch (IOException e) {
                         e.printStackTrace();
+                    }
+                }
+            }
+
+            private void collectSubfolders(File folder, List<File> result) {
+                File[] children = folder.listFiles();
+                if (children != null) {
+                    for (File child : children) {
+                        if (child.isDirectory()) {
+                            result.add(child);
+                            collectSubfolders(child, result);
+                        }
                     }
                 }
             }
