@@ -2,7 +2,7 @@
 
 ## Project Description
 
-[Write 1–2 paragraphs describing what the system does, who it is for, and what problem it solves.]
+This project is a simplified music streaming application that allows users to search for songs, create playlists, and manage a personal music library. The system models core features found in modern music streaming platforms while storing all data locally using CSV files. It also includes separate roles for users and administrators, where admins can manage the song database.
 
 ## Technologies Used
 
@@ -23,13 +23,22 @@ CSV files are located in: /data
 
 ## Features
 
-[Feature 1]
+User account login and management
 
-[Feature 2]
+Search and browse songs in the music library
 
-[Feature 3]
+Create and manage playlists
 
-[Feature 4]
+Play songs through a playback queue
+
+Admin controls for adding or removing songs from the system
+
+[Add On features]
+
+## How to Run
+
+[Add Instructions here]
 
 ## References
+
 Can be found in the Information folder
