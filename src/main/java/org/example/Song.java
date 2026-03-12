@@ -2,6 +2,9 @@ package org.example;
 
 public class Song {
     private String title;
+    private String genre;
+    private String artist;
+    private String lyrics;
     private String filePath;
 
     public Song(String title, String filePath) {
@@ -28,5 +31,8 @@ public class Song {
     @Override
     public String toString() {
         return title;
+    }
+    public String toCSVString() {
+        return title+","+genre+","+artist+","+lyrics+","+filePath;
     }
 }
