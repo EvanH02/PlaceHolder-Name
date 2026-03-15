@@ -1,5 +1,5 @@
 // Handles creating new playlist folders
-package org.example;
+package org.example.frontend;
 
 import javax.swing.*;
 import java.io.File;

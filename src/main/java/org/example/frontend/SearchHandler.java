@@ -1,5 +1,8 @@
 // Handles the search
-package org.example;
+package org.example.frontend;
+
+import org.example.backend.Playlist;
+import org.example.backend.Song;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;

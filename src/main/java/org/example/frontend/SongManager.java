@@ -1,5 +1,5 @@
 // Handles adding and removing song files from playlist folders
-package org.example;
+package org.example.frontend;
 
 import javax.swing.*;
 import java.io.File;
