@@ -62,7 +62,7 @@ public class Playlist {
     public void readCSV(File csv){
         //reads  csv into list
         int cursong=0;
-        try (BufferedReader br = new BufferedReader(new FileReader(csv.getName()))) {
+        try (BufferedReader br = new BufferedReader(new FileReader(csv))) {
             String line;
 
             String header=br.readLine();//header check here
