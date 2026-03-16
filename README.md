@@ -39,7 +39,7 @@ Admin controls for adding or removing songs from the system
 
 1. **Clone/Download** this repository to your local machine.
 2. Open the project in your preferred IDE (e.g, IntelliJ IDEA or Eclipse).
-3. Locate and run `PlaceHolderName`.
+3. Locate and run `PlaceHolderName`, which is located in the `src` and then `frontend`.
 4. Once the window opens, click any of the options in the menu bar.
 5. When adding songs, make sure to include a file, not just a name.
 
