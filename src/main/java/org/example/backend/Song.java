@@ -11,6 +11,11 @@ public class Song {
         this.title = title;
         this.filePath = filePath;
     }
+    public Song(String title, String filePath,String genre) {
+        this.title = title;
+        this.filePath = filePath;
+        this.genre = genre;
+    }
 
     public String getTitle() {
         return title;
@@ -26,6 +31,30 @@ public class Song {
 
     public void setFilePath(String filePath) {
         this.filePath = filePath;
+    }
+
+    public String getGenre() {
+        return genre;
+    }
+
+    public void setGenre(String genre) {
+        this.genre = genre;
+    }
+
+    public String getArtist() {
+        return artist;
+    }
+
+    public void setArtist(String artist) {
+        this.artist = artist;
+    }
+
+    public String getLyrics() {
+        return lyrics;
+    }
+
+    public void setLyrics(String lyrics) {
+        this.lyrics = lyrics;
     }
 
     @Override
