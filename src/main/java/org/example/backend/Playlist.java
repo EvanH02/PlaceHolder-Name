@@ -42,7 +42,7 @@ public class Playlist {
     }
     public void writeCSV(){
         String csvpath="src/main/resources/data/";
-        String fileName= csvpath+name+".csv";
+        String fileName= csvpath+name;
          try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileName))) {
              writer.write(csvHeader+"\n");
             for (Song s: songs) {
@@ -62,9 +62,10 @@ public class Playlist {
     public void readCSV(File csv){
         //reads  csv into list
         int cursong=0;
+        System.out.println(csv.getAbsolutePath());
         try (BufferedReader br = new BufferedReader(new FileReader(csv))) {
             String line;
-
+            //add the creation of song files
             String header=br.readLine();//header check here
 
             while ((line = br.readLine()) != null) {
@@ -72,8 +73,10 @@ public class Playlist {
               //System.out.println("式"+line);
                 String[] values = line.split(COMMA_DELIMITER);
 
-
-                songs.add(cursong,new Song(values[0],values[4]));
+                Song newSong=new Song(values[0],values[4]);
+                File songlocation= new File(newSong.getFilePath());
+                songlocation.mkdir();
+                songs.add(cursong,newSong);
                 cursong++;
             }
         } catch (FileNotFoundException e) {
@@ -91,7 +94,7 @@ public class Playlist {
     Playlist test= new Playlist("PLaylistTest");
 
 
-    test.readCSV(csv);
+    //test.readCSV(csv);
          System.out.println(test.songs.toString());
          test.writeCSV();
     }
