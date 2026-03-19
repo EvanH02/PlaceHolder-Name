@@ -7,6 +7,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.util.ArrayList;
 
 public class PlaceHolderName extends JFrame {
@@ -19,7 +20,23 @@ public class PlaceHolderName extends JFrame {
 
     public PlaceHolderName() {
         //on start loads the playlists
+        //on start up for every csv  in the data folder it is read from csv
         // window settings
+        File loadPlaylist= new File("src/main/resources/data");
+
+        for(File p:loadPlaylist.listFiles()){
+            Playlist l=new Playlist(p.getName());
+            System.out.println( p.getName());// getAbsolutePath());
+            l.readCSV(p);
+
+            playlists.add(l);
+
+        }
+        for (Playlist p:playlists) {
+            System.out.println(p.getSongs().toString());
+
+
+        }
         this.setDefaultCloseOperation(EXIT_ON_CLOSE);
         this.setTitle("PlaceHolderName");
         this.setSize(500, 400);
@@ -55,7 +72,8 @@ public class PlaceHolderName extends JFrame {
         newPlaylist.addActionListener(new ActionListener() {
                                           @Override
                                           public void actionPerformed(ActionEvent e) {
-                                              playlistManager.createPlaylist();
+                                              Playlist newPlaylist=playlistManager.createPlaylist();
+                                              playlists.add(newPlaylist) ;
                                           }
                                       }
 
@@ -84,6 +102,17 @@ public class PlaceHolderName extends JFrame {
         JScrollPane treeScrollPane = new JScrollPane(treeManager.getTree());
         treePanel.add(treeScrollPane, BorderLayout.CENTER);
         this.add(treePanel, BorderLayout.CENTER);
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            public void windowClosing(java.awt.event.WindowEvent e) {
+                for(Playlist p : playlists){
+                    System.out.println(p.getName());
+                    p.writeCSV();
+
+                }
+
+                System.out.println("Playlists have been saved!");
+            }
+        });
 
     }
 
