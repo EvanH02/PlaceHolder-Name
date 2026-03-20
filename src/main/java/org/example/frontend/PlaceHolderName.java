@@ -1,6 +1,7 @@
 // Main application frame for PlaceHolderName music organizer
 package org.example.frontend;
 
+import org.example.backend.AuthManager;
 import org.example.backend.Playlist;
 
 import javax.swing.*;
@@ -17,6 +18,8 @@ public class PlaceHolderName extends JFrame {
     private final SongManager songManager;
     private final PlaylistManager playlistManager;
     private final SearchHandler searchHandler;
+    private String loggedInUser;
+    private boolean isAdmin;
 
     public PlaceHolderName() {
         //on start loads the playlists
@@ -25,6 +28,7 @@ public class PlaceHolderName extends JFrame {
         File loadPlaylist= new File("src/main/resources/data");
 
         for(File p:loadPlaylist.listFiles()){
+            if (p.getName().equals("users.csv")) continue;
             Playlist l=new Playlist(p.getName());
             System.out.println( p.getName());// getAbsolutePath());
             l.readCSV(p);
@@ -116,8 +120,28 @@ public class PlaceHolderName extends JFrame {
 
     }
 
+    public void setLoggedInUser(String user) {
+        this.loggedInUser = user;
+    }
+
+    public void setAdmin(boolean admin) {
+        this.isAdmin = admin;
+    }
+
     public static void main(String[] args) {
+                AuthManager authManager = new AuthManager();
+
+                LoginDialog loginDialog = new LoginDialog(authManager);
+                loginDialog.setVisible(true);
+
+                if (!loginDialog.isAuthenticated()) {
+                    System.exit(0);
+                }
+
                 PlaceHolderName placeHolderName = new PlaceHolderName();
+                placeHolderName.setLoggedInUser(loginDialog.getLoggedInUser());
+                placeHolderName.setAdmin(authManager.isAdmin(loginDialog.getLoggedInUser()));
+                placeHolderName.setTitle("PlaceHolderName - Logged in as: " + loginDialog.getLoggedInUser());
                 placeHolderName.setVisible(true);
             }
 }
