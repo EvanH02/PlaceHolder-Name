@@ -97,6 +97,17 @@ public class PlaceHolderName extends JFrame {
 
         menuBar.add(removeSong);
 
+        //remove from playlist feature
+        JMenuItem removeFromPlaylist = new JMenuItem("Remove from Playlist");
+        removeFromPlaylist.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                PlaylistRemover playlistRemover = new PlaylistRemover(PlaceHolderName.this, treeManager);
+                playlistRemover.showstheplaylistremovedDialog();
+            }
+        });
+        menuBar.add(removeFromPlaylist);
+
 
         // JPanel containing the JTree
         JPanel treePanel = new JPanel();
