@@ -21,7 +21,9 @@ public class PlaceHolderName extends JFrame {
     private String loggedInUser;
     private boolean isAdmin;
 
-    public PlaceHolderName() {
+    public PlaceHolderName(boolean isAdmin) {
+        this.isAdmin = isAdmin;
+
         //on start loads the playlists
         //on start up for every csv  in the data folder it is read from csv
         // window settings
@@ -63,39 +65,42 @@ public class PlaceHolderName extends JFrame {
         searchMenu.add(searchItem);
         menuBar.add(searchMenu);
 
-        JMenuItem addSong = new JMenuItem("Add Song");
-        addSong.addActionListener(new ActionListener() {
+        // admin-only: add song to root
+        if (isAdmin) {
+            JMenuItem addSong = new JMenuItem("Add Song");
+            addSong.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    songManager.addSong();
+                }
+            });
+            menuBar.add(addSong);
+        }
+
+        // all users: add songs to a playlist
+        JMenuItem addToPlaylist = new JMenuItem("Add to Playlist");
+        addToPlaylist.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                songManager.addSong();
+                songManager.addToPlaylist();
             }
         });
+        menuBar.add(addToPlaylist);
 
-        menuBar.add(addSong);
-        JMenuItem newPlaylist = new JMenuItem("Add Playlist");
-        newPlaylist.addActionListener(new ActionListener() {
-                                          @Override
-                                          public void actionPerformed(ActionEvent e) {
-                                              Playlist newPlaylist=playlistManager.createPlaylist();
-                                              playlists.add(newPlaylist) ;
-                                          }
-                                      }
-
-        );
-        menuBar.add(addSong);
-        menuBar.add(newPlaylist);
         this.add(menuBar, BorderLayout.PAGE_START);
-        //Admin can remove songs
-        JMenuItem removeSong = new JMenuItem("Remove Song");
-        removeSong.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                System.out.println("aaaaaaa");
-                songManager.removeSong();
-            }
-        });
 
-        menuBar.add(removeSong);
+        // admin-only: remove songs
+        if (isAdmin) {
+            JMenuItem removeSong = new JMenuItem("Remove Song");
+            removeSong.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    System.out.println("aaaaaaa");
+                    songManager.removeSong();
+                }
+            });
+            menuBar.add(removeSong);
+        }
 
         //remove from playlist feature
         JMenuItem removeFromPlaylist = new JMenuItem("Remove from Playlist");
@@ -149,9 +154,9 @@ public class PlaceHolderName extends JFrame {
                     System.exit(0);
                 }
 
-                PlaceHolderName placeHolderName = new PlaceHolderName();
+                boolean admin = authManager.isAdmin(loginDialog.getLoggedInUser());
+                PlaceHolderName placeHolderName = new PlaceHolderName(admin);
                 placeHolderName.setLoggedInUser(loginDialog.getLoggedInUser());
-                placeHolderName.setAdmin(authManager.isAdmin(loginDialog.getLoggedInUser()));
                 placeHolderName.setTitle("PlaceHolderName - Logged in as: " + loginDialog.getLoggedInUser());
                 placeHolderName.setVisible(true);
             }
