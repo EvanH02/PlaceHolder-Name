@@ -6,19 +6,20 @@ import org.example.backend.Song;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class PlaylistRemover {
 
     private final JFrame parentFrame;
     private final MusicTreeManager treeManager;
+    private final List<Playlist> playlists;
 
-    public PlaylistRemover(JFrame parentFrame, MusicTreeManager treeManager) {
+    public PlaylistRemover(JFrame parentFrame, MusicTreeManager treeManager, List<Playlist> playlists) {
         this.parentFrame = parentFrame;
         this.treeManager = treeManager;
+        this.playlists = playlists;
     }
 
     public void showstheplaylistremovedDialog() {
@@ -29,10 +30,9 @@ public class PlaylistRemover {
         }
         showSongRemovalDialog(selectedPlaylist);
     }
-    //User choose which playlist to remove songs from
-    private Playlist selectPlaylist() {
-        List<Playlist> playlists = getAllPlaylists();
 
+    // dropdown available playlists for user to choose
+    private Playlist selectPlaylist() {
         if (playlists.isEmpty()) {
             JOptionPane.showMessageDialog(parentFrame,
                     "No playlist found",
@@ -59,67 +59,17 @@ public class PlaylistRemover {
             return null;
         }
 
-        // finding the matching playlist
         return playlists.stream()
                 .filter(p -> p.getName().equals(chosen))
                 .findFirst()
                 .orElse(null);
     }
 
-    // playlists from the filesystem
-
-    private List<Playlist> getAllPlaylists() {
-        List<Playlist> playlists = new ArrayList<>();
-        File rootFolder = new File("src/main/resources/PlaceHolder Name Songs");
-
-        if (rootFolder.exists() && rootFolder.isDirectory()) {
-            File[] folders = rootFolder.listFiles(File::isDirectory);
-            if (folders != null) {
-                for (File folder : folders) {
-                    Playlist playlist = new Playlist(folder.getName());
-                    // loading songs from folder
-                    File[] songFiles = folder.listFiles((dir, name) ->
-                            name.toLowerCase().endsWith(".mp3") ||
-                                    name.toLowerCase().endsWith(".wav") ||
-                                    name.toLowerCase().endsWith(".m4a"));
-
-                    if (songFiles != null) {
-                        for (File songFile : songFiles) {
-                            Song song = new Song(songFile.getName(), songFile.getAbsolutePath());
-                            playlist.addSong(song);
-                        }
-                    }
-                    playlists.add(playlist);
-                }
-            }
-        }
-
-        return playlists;
-    }
-
-    // get all songs in a specific playlist
-
+    // songs directly from playlist object
     private List<Song> getSongsInPlaylist(Playlist playlist) {
-        List<Song> songs = new ArrayList<>();
-        File playlistFolder = new File("src/main/resources/PlaceHolder Name Songs/" + playlist.getName());
-
-        if (playlistFolder.exists() && playlistFolder.isDirectory()) {
-            File[] songFiles = playlistFolder.listFiles((dir, name) ->
-                    name.toLowerCase().endsWith(".mp3") ||
-                            name.toLowerCase().endsWith(".wav") ||
-                            name.toLowerCase().endsWith(".m4a"));
-
-            if (songFiles != null) {
-                for (File songFile : songFiles) {
-                    Song song = new Song(songFile.getName(), songFile.getAbsolutePath());
-                    songs.add(song);
-                }
-            }
-        }
-
-        return songs;
+        return new ArrayList<>(playlist.getSongs());
     }
-    // show dialog with checkboxes
+    //dialog checkbox for songs IN PLAYLIST
     private void showSongRemovalDialog(Playlist playlist) {
         List<Song> songs = getSongsInPlaylist(playlist);
         if (songs.isEmpty()) {
@@ -130,7 +80,7 @@ public class PlaylistRemover {
             return;
         }
 
-        // creat the dialog
+        // dialog with checkboxes for songs
         JDialog dialog = new JDialog(parentFrame, "Remove songs from " + playlist.getName(), true);
         dialog.setSize(400, 500);
         dialog.setLocationRelativeTo(parentFrame);
@@ -138,12 +88,14 @@ public class PlaylistRemover {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        //the instructions
+
+        //instructions
         JLabel instructions = new JLabel("Select songs to remove from " + playlist.getName());
         instructions.setFont(new Font("Arial", Font.BOLD, 14));
         panel.add(instructions, BorderLayout.NORTH);
 
-        //checkbox panel
+
+
         JPanel songsPanel = new JPanel();
         songsPanel.setLayout(new BoxLayout(songsPanel, BoxLayout.Y_AXIS));
         List<JCheckBox> checkBoxes = new ArrayList<>();
@@ -159,12 +111,14 @@ public class PlaylistRemover {
         scrollPane.setBorder(BorderFactory.createTitledBorder("Songs"));
         panel.add(scrollPane, BorderLayout.CENTER);
 
-        //button
+
+        //buttons
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
         JButton removeButton = new JButton("Remove Selected");
         JButton cancelButton = new JButton("Cancel");
 
         removeButton.addActionListener(e -> {
+            // Collect selected songs
             List<Song> songsToRemove = new ArrayList<>();
             for (int i = 0; i < checkBoxes.size(); i++) {
                 if (checkBoxes.get(i).isSelected()) {
@@ -207,31 +161,14 @@ public class PlaylistRemover {
         dialog.setVisible(true);
     }
 
-    //  deletes selected song files
-
+    // removes songs from playlist object and saves to CS
     private void removeSongsFromPlaylist(Playlist playlist, List<Song> songsToRemove) {
-        File playlistFolder = new File("src/main/resources/PlaceHolder Name Songs/" + playlist.getName());
-
         for (Song song : songsToRemove) {
-            File songFile = new File(song.getFilePath());
-            try {
-                if (songFile.exists() && songFile.getParentFile().equals(playlistFolder)) {
-                    Files.deleteIfExists(songFile.toPath());
-                    System.out.println("Removed song: " + song.getTitle() + " from playlist: " + playlist.getName());
-                }
-            } catch (IOException e) {
-                System.err.println("Error removing song: " + song.getTitle());
-                e.printStackTrace();
-                JOptionPane.showMessageDialog(parentFrame,
-                        "Error removing song: " + song.getTitle(),
-                        "Removal Error",
-                        JOptionPane.ERROR_MESSAGE);
-            }
+            playlist.removeSong(song);
+            System.out.println("Removed song: " + song.getTitle() + " from playlist: " + playlist.getName());
         }
+
+
+        playlist.writeCSV();
     }
 }
-
-
-
-
-
