@@ -3,6 +3,7 @@ package org.example.frontend;
 
 import org.example.backend.Playlist;
 import org.example.backend.Song;
+import org.example.backend.CsvStore;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -10,6 +11,7 @@ import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.io.File;
+import java.util.List;
 
 public class MusicTreeManager {
 
@@ -18,7 +20,7 @@ public class MusicTreeManager {
     private DefaultTreeModel treeModel;
 
     public MusicTreeManager() {
-        rootNode = buildResourceTree("PlaceHolder Name Songs");
+        rootNode = buildResourceTree();
         treeModel = new DefaultTreeModel(rootNode, true);
         tree = new JTree(treeModel);
 
@@ -50,7 +52,7 @@ public class MusicTreeManager {
     }
 
     public void refreshTree() {
-        rootNode = buildResourceTree("PlaceHolder Name Songs");
+        rootNode = buildResourceTree();
         treeModel.setRoot(rootNode);
         treeModel.reload();
         // expand all nodes
@@ -59,35 +61,42 @@ public class MusicTreeManager {
         }
     }
 
-    public DefaultMutableTreeNode buildResourceTree (String folderName){
-                File folder = new File("src/main/resources/" + folderName);
+    public DefaultMutableTreeNode buildResourceTree (){
+        // root playlist from RootSongs.csv
+        Playlist rootPlaylist = new Playlist("Root");
+        DefaultMutableTreeNode root = new DefaultMutableTreeNode(rootPlaylist);
+        root.setAllowsChildren(true);
 
-                if (!folder.exists() || !folder.isDirectory()) {
-                    throw new IllegalArgumentException("Folder not found: " + folderName);
-                }
+        List<Song> rootSongs = CsvStore.readSongsFromCsv(CsvStore.ROOT_CSV);
+        for (Song s : rootSongs) {
+            rootPlaylist.addSong(s);
+            DefaultMutableTreeNode songNode = new DefaultMutableTreeNode(s);
+            songNode.setAllowsChildren(false);
+            root.add(songNode);
+        }
 
-                return buildTreeNode(folder);
-            }
-
-            private DefaultMutableTreeNode buildTreeNode (File folder){
-                Playlist playlist = new Playlist(folder.getName());
-                DefaultMutableTreeNode node = new DefaultMutableTreeNode(playlist);
-                node.setAllowsChildren(true);
-                File[] files = folder.listFiles();
-                if (files != null) {
-                    for (File file : files) {
-                        if (file.isDirectory()) {
-                            node.add(buildTreeNode(file));
-                        } else {
-                            Song song = new Song(file.getName(), file.getAbsolutePath());
-                            playlist.addSong(song);
-                            DefaultMutableTreeNode songNode = new DefaultMutableTreeNode(song);
-                            songNode.setAllowsChildren(false);
-                            node.add(songNode);
-                        }
+        // playlists from data directory (each playlist is a csv file other than RootSongs.csv and users.csv)
+        File dataDir = new File(CsvStore.DATA_DIR);
+        if (dataDir.exists() && dataDir.isDirectory()) {
+            File[] files = dataDir.listFiles((dir, name) -> name.toLowerCase().endsWith(".csv") && !name.equalsIgnoreCase("RootSongs.csv") && !name.equalsIgnoreCase("users.csv"));
+            if (files != null) {
+                for (File f : files) {
+                    String playlistName = f.getName().replaceFirst("\\.csv$", "");
+                    Playlist p = new Playlist(playlistName);
+                    DefaultMutableTreeNode pNode = new DefaultMutableTreeNode(p);
+                    pNode.setAllowsChildren(true);
+                    List<Song> songs = CsvStore.readSongsFromCsv(f.getAbsolutePath());
+                    for (Song s : songs) {
+                        p.addSong(s);
+                        DefaultMutableTreeNode sNode = new DefaultMutableTreeNode(s);
+                        sNode.setAllowsChildren(false);
+                        pNode.add(sNode);
                     }
+                    root.add(pNode);
                 }
-
-                return node;
             }
+        }
+
+        return root;
+    }
 }

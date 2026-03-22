@@ -62,6 +62,6 @@ public class Song {
         return title;
     }
     public String toCSVString() {
-        return title+","+genre+","+artist+","+lyrics+","+filePath;
+        return title+","+genre+","+artist;
     }
 }

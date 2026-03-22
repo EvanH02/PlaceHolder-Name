@@ -1,5 +1,6 @@
 package org.example.frontend;
 
+import org.example.backend.CsvStore;
 import org.example.backend.Playlist;
 import org.example.backend.Song;
 
@@ -8,18 +9,15 @@ import java.awt.*;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class PlaylistRemover {
 
     private final JFrame parentFrame;
     private final MusicTreeManager treeManager;
-    private final List<Playlist> playlists;
 
-    public PlaylistRemover(JFrame parentFrame, MusicTreeManager treeManager, List<Playlist> playlists) {
+    public PlaylistRemover(JFrame parentFrame, MusicTreeManager treeManager) {
         this.parentFrame = parentFrame;
         this.treeManager = treeManager;
-        this.playlists = playlists;
     }
 
     public void showstheplaylistremovedDialog() {
@@ -30,9 +28,10 @@ public class PlaylistRemover {
         }
         showSongRemovalDialog(selectedPlaylist);
     }
-
-    // dropdown available playlists for user to choose
+    //User choose which playlist to remove songs from
     private Playlist selectPlaylist() {
+        List<Playlist> playlists = getAllPlaylists();
+
         if (playlists.isEmpty()) {
             JOptionPane.showMessageDialog(parentFrame,
                     "No playlist found",
@@ -59,17 +58,44 @@ public class PlaylistRemover {
             return null;
         }
 
+        // finding the matching playlist
         return playlists.stream()
                 .filter(p -> p.getName().equals(chosen))
                 .findFirst()
                 .orElse(null);
     }
 
-    // songs directly from playlist object
-    private List<Song> getSongsInPlaylist(Playlist playlist) {
-        return new ArrayList<>(playlist.getSongs());
+    // playlists from the filesystem (csv files)
+
+    private List<Playlist> getAllPlaylists() {
+        List<Playlist> playlists = new ArrayList<>();
+        File dataDir = new File(CsvStore.DATA_DIR);
+
+        if (dataDir.exists() && dataDir.isDirectory()) {
+            File[] files = dataDir.listFiles((dir, name) -> name.toLowerCase().endsWith(".csv") && !name.equalsIgnoreCase("RootSongs.csv") && !name.equalsIgnoreCase("users.csv"));
+            if (files != null) {
+                for (File file : files) {
+                    Playlist playlist = new Playlist(file.getName().replaceFirst("\\.csv$", ""));
+                    // loading songs from csv
+                    List<Song> songs = CsvStore.readSongsFromCsv(file.getAbsolutePath());
+                    for (Song song : songs) {
+                        playlist.addSong(song);
+                    }
+                    playlists.add(playlist);
+                }
+            }
+        }
+
+        return playlists;
     }
-    //dialog checkbox for songs IN PLAYLIST
+
+    // get all songs in a specific playlist
+
+    private List<Song> getSongsInPlaylist(Playlist playlist) {
+        String path = CsvStore.DATA_DIR + playlist.getName() + ".csv";
+        return CsvStore.readSongsFromCsv(path);
+    }
+    // show dialog with checkboxes
     private void showSongRemovalDialog(Playlist playlist) {
         List<Song> songs = getSongsInPlaylist(playlist);
         if (songs.isEmpty()) {
@@ -80,7 +106,7 @@ public class PlaylistRemover {
             return;
         }
 
-        // dialog with checkboxes for songs
+        // creat the dialog
         JDialog dialog = new JDialog(parentFrame, "Remove songs from " + playlist.getName(), true);
         dialog.setSize(400, 500);
         dialog.setLocationRelativeTo(parentFrame);
@@ -88,14 +114,12 @@ public class PlaylistRemover {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-
-        //instructions
+        //the instructions
         JLabel instructions = new JLabel("Select songs to remove from " + playlist.getName());
         instructions.setFont(new Font("Arial", Font.BOLD, 14));
         panel.add(instructions, BorderLayout.NORTH);
 
-
-
+        //checkbox panel
         JPanel songsPanel = new JPanel();
         songsPanel.setLayout(new BoxLayout(songsPanel, BoxLayout.Y_AXIS));
         List<JCheckBox> checkBoxes = new ArrayList<>();
@@ -111,14 +135,12 @@ public class PlaylistRemover {
         scrollPane.setBorder(BorderFactory.createTitledBorder("Songs"));
         panel.add(scrollPane, BorderLayout.CENTER);
 
-
-        //buttons
+        //button
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
         JButton removeButton = new JButton("Remove Selected");
         JButton cancelButton = new JButton("Cancel");
 
         removeButton.addActionListener(e -> {
-            // Collect selected songs
             List<Song> songsToRemove = new ArrayList<>();
             for (int i = 0; i < checkBoxes.size(); i++) {
                 if (checkBoxes.get(i).isSelected()) {
@@ -135,7 +157,11 @@ public class PlaylistRemover {
                         JOptionPane.WARNING_MESSAGE);
 
                 if (confirm == JOptionPane.YES_OPTION) {
-                    removeSongsFromPlaylist(playlist, songsToRemove);
+                    // remove and write back csv
+                    songs.removeAll(songsToRemove);
+                    String path = CsvStore.DATA_DIR + playlist.getName() + ".csv";
+                    CsvStore.writeSongsToCsv(path, songs);
+
                     dialog.dispose();
                     treeManager.refreshTree();
                     JOptionPane.showMessageDialog(parentFrame,
@@ -161,14 +187,4 @@ public class PlaylistRemover {
         dialog.setVisible(true);
     }
 
-    // removes songs from playlist object and saves to CS
-    private void removeSongsFromPlaylist(Playlist playlist, List<Song> songsToRemove) {
-        for (Song song : songsToRemove) {
-            playlist.removeSong(song);
-            System.out.println("Removed song: " + song.getTitle() + " from playlist: " + playlist.getName());
-        }
-
-
-        playlist.writeCSV();
-    }
 }

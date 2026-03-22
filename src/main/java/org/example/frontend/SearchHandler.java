@@ -85,7 +85,7 @@ public class SearchHandler {
 
         searchResultsModel.clear();
 
-        DefaultMutableTreeNode root = treeManager.buildResourceTree("PlaceHolder Name Songs");
+        DefaultMutableTreeNode root = treeManager.buildResourceTree();
         List<String> results = new ArrayList<>();
         searchInNode(root, searchText, results);
         for (String result : results) {
@@ -104,12 +104,12 @@ public class SearchHandler {
         if (userObject instanceof Song) {
             Song song = (Song) userObject;
             if (song.getTitle().toLowerCase().contains(searchText)) {
-                results.add("🎵 " + song.getTitle());
+                results.add("\ud83c\udfb5 " + song.getTitle());
             }
         } else if (userObject instanceof Playlist) {
             Playlist playlist = (Playlist) userObject;
             if (playlist.getName().toLowerCase().contains(searchText)) {
-                results.add("📁 " + playlist.getName());
+                results.add("\ud83d\udcc1 " + playlist.getName());
             }
         }
 
