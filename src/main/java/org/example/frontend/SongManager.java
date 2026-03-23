@@ -1,6 +1,9 @@
 // Handles adding and removing song files from playlist folders
 package org.example.frontend;
 
+import org.example.backend.Playlist;
+import org.example.backend.Song;
+
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
@@ -45,7 +48,7 @@ public class SongManager {
     }
 
     // user feature: select songs from root, copy to playlist
-    public void addToPlaylist() {
+    public void addToPlaylist(ArrayList<Playlist> playlists) {
         File rootFolder = new File("src/main/resources/PlaceHolder Name Songs");
 
         // get songs in root only
@@ -147,8 +150,10 @@ public class SongManager {
             // copy files to playlist, keep originals
             int copied = 0;
             for (File src : selected) {
-                try {
-                    Files.copy(src.toPath(), destFolder.toPath().resolve(src.getName()), StandardCopyOption.REPLACE_EXISTING);
+                try { //add here
+                    Path psong=Files.copy(src.toPath(), destFolder.toPath().resolve(src.getName()), StandardCopyOption.REPLACE_EXISTING);
+                    playlists.add(new Playlist(chosenName));
+                    playlists.get(playlists.size()-1).addSong(new Song(src.getName(),psong.toString()));
                     copied++;
                 } catch (IOException ex) {
                     ex.printStackTrace();

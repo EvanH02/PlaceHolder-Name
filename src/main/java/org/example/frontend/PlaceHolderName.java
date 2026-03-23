@@ -82,7 +82,7 @@ public class PlaceHolderName extends JFrame {
         addToPlaylist.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                songManager.addToPlaylist();
+                songManager.addToPlaylist(playlists);
             }
         });
         menuBar.add(addToPlaylist);
@@ -127,7 +127,7 @@ public class PlaceHolderName extends JFrame {
         addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosing(java.awt.event.WindowEvent e) {
                 for(Playlist p : playlists){
-                    System.out.println(p.getName());
+                    System.out.println(p.getName()+"j");
                     p.writeCSV();
 
                 }
