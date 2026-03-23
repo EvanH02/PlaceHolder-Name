@@ -1,10 +1,12 @@
 // Handles creating new playlist folders
 package org.example.frontend;
 
+import org.example.backend.CsvStore;
 import org.example.backend.Playlist;
 
 import javax.swing.*;
 import java.io.File;
+import java.util.ArrayList;
 
 public class PlaylistManager {
 
@@ -16,18 +18,23 @@ public class PlaylistManager {
 
     public Playlist createPlaylist () {
         String name = JOptionPane.showInputDialog("Enter playlist name:");
-        //change this later to its own folder
+        if (name == null || name.trim().isEmpty()) return null;
         Playlist savePlaylist = new Playlist(name);
-        File newplaylist = new File(
-                System.getProperty("user.dir") + "/src/main/resources/PlaceHolder Name Songs/" + name
-        );
-        if (newplaylist.mkdirs()) {
-            System.out.println("Created: " + newplaylist.getAbsolutePath());
-            treeManager.refreshTree();
-        } else {
-            System.out.println("Folder already exists or failed.");
+        String filename = CsvStore.DATA_DIR + name + ".csv";
+        File newplaylist = new File(filename);
+        try {
+            newplaylist.getParentFile().mkdirs();
+            boolean created = newplaylist.createNewFile();
+            if (created) {
+                CsvStore.writeSongsToCsv(filename, new ArrayList<>());
+                System.out.println("Created: " + newplaylist.getAbsolutePath());
+                treeManager.refreshTree();
+            } else {
+                System.out.println("File already exists or failed to create.");
+            }
+        } catch (Exception e) {
+            System.out.println("Failed to create playlist file: " + e.getMessage());
         }
-        System.out.println(System.getProperty("user.dir") + "src/main/resources/PlaceHolder Name Songs/" + name);
         return savePlaylist;
 
     }

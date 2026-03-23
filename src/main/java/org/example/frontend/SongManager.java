@@ -1,16 +1,12 @@
 // Handles adding and removing song files from playlist folders
 package org.example.frontend;
 
-import org.example.backend.Playlist;
+import org.example.backend.CsvStore;
 import org.example.backend.Song;
 
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,36 +20,48 @@ public class SongManager {
         this.treeManager = treeManager;
     }
 
-    // admin-only: adds song to root folder
+    // admin-only: adds song to root CSV
     public void addSong() {
-        JFileChooser addSongFile = new JFileChooser();
-        int result = addSongFile.showOpenDialog(null);
-        if (result == JFileChooser.APPROVE_OPTION) {
-            File selectedFile = addSongFile.getSelectedFile();
-            File rootFolder = new File("src/main/resources/PlaceHolder Name Songs");
-            Path destinationFile = rootFolder.toPath().resolve(selectedFile.getName());
+        JTextField titleField = new JTextField();
+        JTextField genreField = new JTextField();
+        JTextField artistField = new JTextField();
+        JTextArea lyricsArea = new JTextArea(6, 30);
 
-            try {
-                Files.copy(
-                        selectedFile.toPath(),
-                        destinationFile,
-                        StandardCopyOption.REPLACE_EXISTING
-                );
-                System.out.println("song added to root");
-                treeManager.refreshTree();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+        JPanel panel = new JPanel(new BorderLayout(5,5));
+        JPanel fields = new JPanel(new GridLayout(3,2,5,5));
+        fields.add(new JLabel("Title:")); fields.add(titleField);
+        fields.add(new JLabel("Genre:")); fields.add(genreField);
+        fields.add(new JLabel("Artist:")); fields.add(artistField);
+        panel.add(fields, BorderLayout.NORTH);
+        panel.add(new JScrollPane(lyricsArea), BorderLayout.CENTER);
+
+        int res = JOptionPane.showConfirmDialog(parentFrame, panel, "Add Song to Root (admin)", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        if (res != JOptionPane.OK_OPTION) return;
+
+        String title = titleField.getText().trim();
+        if (title.isEmpty()) {
+            JOptionPane.showMessageDialog(parentFrame, "Title is required.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        Song s = new Song(title, CsvStore.ROOT_CSV);
+        s.setGenre(genreField.getText().trim());
+        s.setArtist(artistField.getText().trim());
+        s.setLyrics(lyricsArea.getText());
+
+        List<Song> toAppend = new ArrayList<>();
+        toAppend.add(s);
+        if (CsvStore.appendSongsToCsv(CsvStore.ROOT_CSV, toAppend)) {
+            treeManager.refreshTree();
+            JOptionPane.showMessageDialog(parentFrame, "Song added to root.", "Done", JOptionPane.INFORMATION_MESSAGE);
+        } else {
+            JOptionPane.showMessageDialog(parentFrame, "Failed to write song.", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    // user feature: select songs from root, copy to playlist
-    public void addToPlaylist(ArrayList<Playlist> playlists) {
-        File rootFolder = new File("src/main/resources/PlaceHolder Name Songs");
-
-        // get songs in root only
-        File[] rootFiles = rootFolder.listFiles(f -> f.isFile());
-        if (rootFiles == null || rootFiles.length == 0) {
+    // user feature: select songs from root CSV, append them to playlist CSV
+    public void addToPlaylist() {
+        List<Song> rootSongs = CsvStore.readSongsFromCsv(CsvStore.ROOT_CSV);
+        if (rootSongs.isEmpty()) {
             JOptionPane.showMessageDialog(parentFrame, "No songs in root to add.", "Add to Playlist", JOptionPane.INFORMATION_MESSAGE);
             return;
         }
@@ -70,8 +78,8 @@ public class SongManager {
         JPanel songsPanel = new JPanel();
         songsPanel.setLayout(new BoxLayout(songsPanel, BoxLayout.Y_AXIS));
         List<JCheckBox> checkBoxes = new ArrayList<>();
-        for (File f : rootFiles) {
-            JCheckBox cb = new JCheckBox(f.getName());
+        for (Song s : rootSongs) {
+            JCheckBox cb = new JCheckBox(s.getTitle());
             cb.setFont(new Font("Monospaced", Font.PLAIN, 12));
             checkBoxes.add(cb);
             songsPanel.add(cb);
@@ -83,31 +91,41 @@ public class SongManager {
         // playlist picker panel
         JPanel bottomSection = new JPanel(new BorderLayout(5, 5));
 
-        // dropdown of existing playlists
-        List<File> playlistFolders = new ArrayList<>();
-        collectSubfolders(rootFolder, playlistFolders);
-        DefaultComboBoxModel<String> comboModel = new DefaultComboBoxModel<>();
-        for (File pf : playlistFolders) {
-            comboModel.addElement(pf.getName());
+        // gather playlist CSVs
+        File dataDir = new File(CsvStore.DATA_DIR);
+        List<File> playlistFiles = new ArrayList<>();
+        if (dataDir.exists() && dataDir.isDirectory()) {
+            File[] files = dataDir.listFiles((d, name) -> name.toLowerCase().endsWith(".csv") && !name.equalsIgnoreCase("RootSongs.csv") && !name.equalsIgnoreCase("users.csv"));
+            if (files != null) {
+                for (File f : files) playlistFiles.add(f);
+            }
         }
+
+        DefaultComboBoxModel<String> comboModel = new DefaultComboBoxModel<>();
+        for (File pf : playlistFiles) comboModel.addElement(pf.getName().replaceFirst("\\.csv$", ""));
         JComboBox<String> playlistCombo = new JComboBox<>(comboModel);
 
         JPanel pickerRow = new JPanel(new BorderLayout(5, 5));
         pickerRow.add(new JLabel("Playlist:"), BorderLayout.WEST);
         pickerRow.add(playlistCombo, BorderLayout.CENTER);
 
-        // create new playlist inline
+        // create new playlist inline (creates csv file)
         JButton createBtn = new JButton("New Playlist");
         createBtn.addActionListener(e -> {
             String name = JOptionPane.showInputDialog(dialog, "Enter playlist name:");
             if (name != null && !name.trim().isEmpty()) {
-                File newDir = new File(rootFolder, name.trim());
-                if (newDir.mkdirs()) {
+                String filename = CsvStore.DATA_DIR + name.trim() + ".csv";
+                File newFile = new File(filename);
+                try {
+                    newFile.getParentFile().mkdirs();
+                    boolean created = newFile.createNewFile();
+                    // write header
+                    if (created) CsvStore.writeSongsToCsv(filename, new ArrayList<>());
                     comboModel.addElement(name.trim());
                     playlistCombo.setSelectedItem(name.trim());
-                    playlistFolders.add(newDir);
+                    playlistFiles.add(newFile);
                     treeManager.refreshTree();
-                } else {
+                } catch (Exception ex) {
                     JOptionPane.showMessageDialog(dialog, "Folder already exists or failed.", "Error", JOptionPane.ERROR_MESSAGE);
                 }
             }
@@ -126,10 +144,10 @@ public class SongManager {
                 return;
             }
             // collect selected songs
-            List<File> selected = new ArrayList<>();
+            List<Song> selected = new ArrayList<>();
             for (int i = 0; i < checkBoxes.size(); i++) {
                 if (checkBoxes.get(i).isSelected()) {
-                    selected.add(rootFiles[i]);
+                    selected.add(rootSongs.get(i));
                 }
             }
             if (selected.isEmpty()) {
@@ -137,32 +155,17 @@ public class SongManager {
                 return;
             }
 
-            // find destination folder
+            // find destination file
             String chosenName = (String) playlistCombo.getSelectedItem();
-            File destFolder = playlistFolders.stream()
-                    .filter(f -> f.getName().equals(chosenName))
-                    .findFirst()
-                    .orElse(null);
-            if (destFolder == null) {
-                return;
-            }
+            String destPath = CsvStore.DATA_DIR + chosenName + ".csv";
 
-            // copy files to playlist, keep originals
-            int copied = 0;
-            for (File src : selected) {
-                try { //add here
-                    Path psong=Files.copy(src.toPath(), destFolder.toPath().resolve(src.getName()), StandardCopyOption.REPLACE_EXISTING);
-                    playlists.add(new Playlist(chosenName));
-                    playlists.get(playlists.size()-1).addSong(new Song(src.getName(),psong.toString()));
-                    copied++;
-                } catch (IOException ex) {
-                    ex.printStackTrace();
-                }
+            if (CsvStore.appendSongsToCsv(destPath, selected)) {
+                treeManager.refreshTree();
+                dialog.dispose();
+                JOptionPane.showMessageDialog(parentFrame, "Added " + selected.size() + " song(s) to \"" + chosenName + "\".", "Done", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(parentFrame, "Failed to write to playlist.", "Error", JOptionPane.ERROR_MESSAGE);
             }
-
-            treeManager.refreshTree();
-            dialog.dispose();
-            JOptionPane.showMessageDialog(parentFrame, "Added " + copied + " song(s) to \"" + chosenName + "\".", "Done", JOptionPane.INFORMATION_MESSAGE);
         });
 
         cancelBtn.addActionListener(e -> dialog.dispose());
@@ -176,25 +179,54 @@ public class SongManager {
     }
 
     public void removeSong() {
-        JFileChooser removeSongFile = new JFileChooser();
-        JOptionPane removeConfirm = new JOptionPane();
-        JOptionPane.showMessageDialog(parentFrame, "This action will DELETE song", "Dialog Title", JOptionPane.WARNING_MESSAGE);
+        // allow admin to remove from root or playlists by choosing which playlist (or root)
+        String[] choices = {"Root", "Playlist"};
+        String choice = (String) JOptionPane.showInputDialog(parentFrame, "Remove from:", "Remove Song", JOptionPane.QUESTION_MESSAGE, null, choices, choices[0]);
+        if (choice == null) return;
 
-        // Set the chooser to open in the playlist folder
-        removeSongFile.setCurrentDirectory(new File("src/main/resources/PlaceHolder Name Songs"));
-
-        int result = removeSongFile.showDialog(parentFrame, "DELETE");
-
-        if (result == JFileChooser.APPROVE_OPTION) {
-            File selectedFile = removeSongFile.getSelectedFile();
-
-            try {
-                Files.deleteIfExists(selectedFile.toPath());
-                System.out.println("song removed");
-                treeManager.refreshTree();
-            } catch (IOException e) {
-                e.printStackTrace();
+        if (choice.equals("Root")) {
+            // select title from root
+            List<Song> rootSongs = CsvStore.readSongsFromCsv(CsvStore.ROOT_CSV);
+            if (rootSongs.isEmpty()) {
+                JOptionPane.showMessageDialog(parentFrame, "No root songs.", "Info", JOptionPane.INFORMATION_MESSAGE);
+                return;
             }
+            String[] titles = rootSongs.stream().map(Song::getTitle).toArray(String[]::new);
+            String sel = (String) JOptionPane.showInputDialog(parentFrame, "Select song to delete:", "Delete", JOptionPane.QUESTION_MESSAGE, null, titles, titles[0]);
+            if (sel == null) return;
+            rootSongs.removeIf(s -> s.getTitle().equals(sel));
+            CsvStore.writeSongsToCsv(CsvStore.ROOT_CSV, rootSongs);
+            treeManager.refreshTree();
+            JOptionPane.showMessageDialog(parentFrame, "Removed from root.", "Done", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        } else {
+            // choose playlist
+            File dataDir = new File(CsvStore.DATA_DIR);
+            List<File> playlistFiles = new ArrayList<>();
+            if (dataDir.exists() && dataDir.isDirectory()) {
+                File[] files = dataDir.listFiles((d, name) -> name.toLowerCase().endsWith(".csv") && !name.equalsIgnoreCase("RootSongs.csv") && !name.equalsIgnoreCase("users.csv"));
+                if (files != null) for (File f : files) playlistFiles.add(f);
+            }
+            if (playlistFiles.isEmpty()) {
+                JOptionPane.showMessageDialog(parentFrame, "No playlists.", "Info", JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+            String[] names = playlistFiles.stream().map(f -> f.getName().replaceFirst("\\.csv$", "")).toArray(String[]::new);
+            String chosen = (String) JOptionPane.showInputDialog(parentFrame, "Select playlist:", "Choose", JOptionPane.QUESTION_MESSAGE, null, names, names[0]);
+            if (chosen == null) return;
+            String path = CsvStore.DATA_DIR + chosen + ".csv";
+            List<Song> songs = CsvStore.readSongsFromCsv(path);
+            if (songs.isEmpty()) {
+                JOptionPane.showMessageDialog(parentFrame, "Playlist empty.", "Info", JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+            String[] titles = songs.stream().map(Song::getTitle).toArray(String[]::new);
+            String sel = (String) JOptionPane.showInputDialog(parentFrame, "Select song to delete:", "Delete", JOptionPane.QUESTION_MESSAGE, null, titles, titles[0]);
+            if (sel == null) return;
+            songs.removeIf(s -> s.getTitle().equals(sel));
+            CsvStore.writeSongsToCsv(path, songs);
+            treeManager.refreshTree();
+            JOptionPane.showMessageDialog(parentFrame, "Removed from playlist.", "Done", JOptionPane.INFORMATION_MESSAGE);
         }
     }
 

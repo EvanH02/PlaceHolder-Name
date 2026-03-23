@@ -108,7 +108,7 @@ public class PlaceHolderName extends JFrame {
         removeFromPlaylist.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                PlaylistRemover playlistRemover = new PlaylistRemover(PlaceHolderName.this, treeManager, playlists);
+                PlaylistRemover playlistRemover = new PlaylistRemover(PlaceHolderName.this, treeManager);
                 playlistRemover.showstheplaylistremovedDialog();
             }
         });

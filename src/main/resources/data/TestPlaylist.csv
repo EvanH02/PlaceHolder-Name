@@ -1,3 +1,4 @@
-Name,Genre,Artist,Lyrics,FilePath
-Song1,null,null,null,path/to/song1.mp3
-Song2,null,null,null,path/to/song2.mp3
+Name,Genre,Artist
+Song1,null,null
+Song2,null,null
+Hey Jude,Rock,The Beatles

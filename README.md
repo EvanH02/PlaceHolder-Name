@@ -35,13 +35,89 @@ Admin controls for adding or removing songs from the system
 
 [Add On features]
 
-## How to Run
+## How to Run (Development)
 
 1. **Clone/Download** this repository to your local machine.
 2. Open the project in your preferred IDE (e.g, IntelliJ IDEA or Eclipse).
-3. Locate and run `PlaceHolderName`, which is located in the `src` and then `frontend`.
+3. Locate and run `PlaceHolderName`, which is located in `src/main/java/org/example/frontend/PlaceHolderName.java`.
 4. Once the window opens, click any of the options in the menu bar.
-5. When adding songs, make sure to include a file, not just a name.
+
+## Build & Run (Windows - packaged)
+
+This project includes an Ant-based build that produces a runnable JAR and simple helper scripts for Windows.
+
+Prerequisites
+- Java 17+ installed and on PATH (java and javac commands available).
+- Apache Ant installed and on PATH (for building with the provided script).
+
+Files added
+- `build.xml` – Ant build file; targets: `clean`, `init`, `compile`, `jar`, `dist`.
+- `build.ps1` – PowerShell helper that runs Ant to create `dist/PlaceHolderName.jar`.
+- `run.ps1` – PowerShell helper that runs the packaged JAR (or falls back to running compiled classes).
+- `run.bat` – Windows batch helper that runs the packaged JAR (or falls back to running compiled classes).
+
+Build steps (PowerShell)
+1. Open PowerShell in the project root.
+2. Run:
+
+```powershell
+.\build.ps1
+```
+
+This will run Ant and produce `dist/PlaceHolderName.jar`.
+
+Run steps (PowerShell)
+- If you built the project, run:
+
+```powershell
+.\run.ps1
+```
+
+- Or in cmd.exe, run:
+
+```bat
+run.bat
+```
+
+## Run the JAR directly
+
+If you already built the project (see Build steps) the runnable JAR will be at `dist/PlaceHolderName.jar`.
+
+PowerShell (Windows):
+
+```powershell
+java -jar dist\PlaceHolderName.jar
+```
+
+Command Prompt (Windows):
+
+```bat
+REM run the packaged jar
+java -jar dist\PlaceHolderName.jar
+```
+
+Unix / macOS:
+
+```bash
+# run the packaged jar
+java -jar dist/PlaceHolderName.jar
+```
+
+Notes:
+- Double-clicking the JAR file in Explorer will run it if your system associates .jar files with Java, but the terminal is preferred so you can see logs and errors.
+
+- If the JAR fails to start, ensure you have a compatible JDK/JRE installed (Java 17+). If you built the jar with Ant and it doesn't exist, run `./build.ps1` first to produce `dist/PlaceHolderName.jar`.
+
+Troubleshooting
+- If `build.ps1` reports that Ant is not found, install Apache Ant (https://ant.apache.org/) and ensure `ant` is on your PATH.
+- Make sure Java (javac/java) is available on the PATH and is version 17 or later.
+- If the app cannot find CSV files, ensure `src/main/resources/data` exists and contains the expected CSVs (the app also creates files when needed).
+
+## How to Use
+
+1. Start the app and login (the admin account is `admin` / `admin`).
+2. Admins can add songs (which are saved to the root CSV).
+3. Users can add songs to playlists via the Add-to-Playlist dialog.
 
 ## References
 
