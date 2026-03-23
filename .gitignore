@@ -1,7 +1,18 @@
-# Compiled class files
+# Build outputs
+build/
+dist/
 target/
 
-# IDE files
+# Packaged jars
+*.jar
+
+# Optional vendor libs
+lib/
+
+# Compiled classes
+**/*.class
+
+# IDE
 .idea/
 *.iml
 *.iws
@@ -15,16 +26,15 @@ target/
 Thumbs.db
 .DS_Store
 
-# Maven
-pom.xml.tag
-pom.xml.releaseBackup
-pom.xml.versionsBackup
-pom.xml.next
-release.properties
-dependency-reduced-pom.xml
-buildNumber.properties
-.mvn/timing.properties
-.mvn/wrapper/maven-wrapper.jar
-
 # Logs
 *.log
+
+# Temporary files
+*.tmp
+*.bak
+
+# Keep README and build scripts tracked
+!build.xml
+!build.ps1
+!run.ps1
+!run.bat
