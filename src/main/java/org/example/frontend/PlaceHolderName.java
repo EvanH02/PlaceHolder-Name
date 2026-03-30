@@ -93,7 +93,7 @@ public class PlaceHolderName extends JFrame {
         addToPlaylist.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                songManager.addToPlaylist(playlists);
+                songManager.addToPlaylist();
             }
         });
         menuBar.add(addToPlaylist);
