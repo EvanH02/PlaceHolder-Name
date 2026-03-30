@@ -29,14 +29,25 @@ public class PlaceHolderName extends JFrame {
         // window settings
         File loadPlaylist= new File("src/main/resources/data");
 
-        for(File p:loadPlaylist.listFiles()){
-            if (p.getName().equals("users.csv")) continue;
-            Playlist l=new Playlist(p.getName());
-            System.out.println( p.getName());// getAbsolutePath());
-            l.readCSV(p);
+        if (loadPlaylist.exists() && loadPlaylist.isDirectory()) {
+            File[] files = loadPlaylist.listFiles();
+            if (files != null) {
+                for (File p : files) {
+                    String fileName = p.getName();
+                    // skip non-csv and users file
+                    if (!fileName.toLowerCase().endsWith(".csv")) continue;
+                    if (fileName.equalsIgnoreCase("users.csv")) continue;
 
-            playlists.add(l);
+                    // strip .csv extension to get the playlist name
+                    String playlistName = fileName.replaceFirst("(?i)\\.csv$", "");
+                    Playlist l = new Playlist(playlistName);
+                    System.out.println(fileName); // original file name
+                    l.readCSV(p);
 
+                    playlists.add(l);
+
+                }
+            }
         }
         for (Playlist p:playlists) {
             System.out.println(p.getSongs().toString());
