@@ -20,8 +20,11 @@ public class PlaceHolderName extends JFrame {
     private final SearchHandler searchHandler;
     private String loggedInUser;
     private boolean isAdmin;
+    private final AuthManager authManager;
+    private JMenuBar menuBar;
 
-    public PlaceHolderName(boolean isAdmin) {
+    public PlaceHolderName(AuthManager authManager, boolean isAdmin) {
+        this.authManager = authManager;
         this.isAdmin = isAdmin;
 
         //on start loads the playlists
@@ -63,8 +66,57 @@ public class PlaceHolderName extends JFrame {
         playlistManager = new PlaylistManager(treeManager);
         searchHandler = new SearchHandler(this, treeManager);
 
-        //menubar containing the Add song/playlisy
-        JMenuBar menuBar = new JMenuBar();
+        buildMenuBar();
+
+        // JPanel containing the JTree
+        JPanel treePanel = new JPanel();
+        treePanel.setLayout(new BorderLayout());
+
+        // create JTree from resource folder
+        JScrollPane treeScrollPane = new JScrollPane(treeManager.getTree());
+        treePanel.add(treeScrollPane, BorderLayout.CENTER);
+        this.add(treePanel, BorderLayout.CENTER);
+
+        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JButton logoutBtn = new JButton("Logout");
+        logoutBtn.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                LoginDialog loginDialog = new LoginDialog(authManager);
+                loginDialog.setVisible(true);
+                if (loginDialog.isAuthenticated()) {
+                    boolean admin = authManager.isAdmin(loginDialog.getLoggedInUser());
+                    setAdmin(admin);
+                    setLoggedInUser(loginDialog.getLoggedInUser());
+                    setTitle("PlaceHolderName - Logged in as: " + loginDialog.getLoggedInUser());
+                    buildMenuBar();
+                }
+            }
+        });
+        bottomPanel.add(logoutBtn);
+        this.add(bottomPanel, BorderLayout.SOUTH);
+
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            public void windowClosing(java.awt.event.WindowEvent e) {
+                for(Playlist p : playlists){
+                    System.out.println(p.getName());
+                    p.writeCSV();
+
+                }
+
+                System.out.println("Playlists have been saved!");
+            }
+        });
+
+    }
+
+    private void buildMenuBar() {
+        if (menuBar != null) {
+            try {
+                this.remove(menuBar);
+            } catch (Exception ignored) {}
+        }
+        menuBar = new JMenuBar();
         JMenu searchMenu = new JMenu("Search");
         JMenuItem searchItem = new JMenuItem("Find Song:");
         searchItem.addActionListener(new ActionListener() {
@@ -98,8 +150,6 @@ public class PlaceHolderName extends JFrame {
         });
         menuBar.add(addToPlaylist);
 
-        this.add(menuBar, BorderLayout.PAGE_START);
-
         // admin-only: remove songs
         if (isAdmin) {
             JMenuItem removeSong = new JMenuItem("Remove Song");
@@ -113,8 +163,6 @@ public class PlaceHolderName extends JFrame {
             menuBar.add(removeSong);
         }
 
-
-        //remove from playlist feature
         JMenuItem removeFromPlaylist = new JMenuItem("Remove from Playlist");
         removeFromPlaylist.addActionListener(new ActionListener() {
             @Override
@@ -125,28 +173,9 @@ public class PlaceHolderName extends JFrame {
         });
         menuBar.add(removeFromPlaylist);
 
-
-
-        // JPanel containing the JTree
-        JPanel treePanel = new JPanel();
-        treePanel.setLayout(new BorderLayout());
-
-        // create JTree from resource folder
-        JScrollPane treeScrollPane = new JScrollPane(treeManager.getTree());
-        treePanel.add(treeScrollPane, BorderLayout.CENTER);
-        this.add(treePanel, BorderLayout.CENTER);
-        addWindowListener(new java.awt.event.WindowAdapter() {
-            public void windowClosing(java.awt.event.WindowEvent e) {
-                for(Playlist p : playlists){
-                    System.out.println(p.getName()+"j");
-                    p.writeCSV();
-
-                }
-
-                System.out.println("Playlists have been saved!");
-            }
-        });
-
+        this.add(menuBar, BorderLayout.PAGE_START);
+        this.revalidate();
+        this.repaint();
     }
 
     public void setLoggedInUser(String user) {
@@ -168,7 +197,7 @@ public class PlaceHolderName extends JFrame {
                 }
 
                 boolean admin = authManager.isAdmin(loginDialog.getLoggedInUser());
-                PlaceHolderName placeHolderName = new PlaceHolderName(admin);
+                PlaceHolderName placeHolderName = new PlaceHolderName(authManager, admin);
                 placeHolderName.setLoggedInUser(loginDialog.getLoggedInUser());
                 placeHolderName.setTitle("PlaceHolderName - Logged in as: " + loginDialog.getLoggedInUser());
                 placeHolderName.setVisible(true);
