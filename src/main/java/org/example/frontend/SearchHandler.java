@@ -8,7 +8,9 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class SearchHandler {
 
@@ -87,7 +89,8 @@ public class SearchHandler {
 
         DefaultMutableTreeNode root = treeManager.buildResourceTree();
         List<String> results = new ArrayList<>();
-        searchInNode(root, searchText, results);
+        Set<String> seenSongs = new HashSet<>();
+        searchInNode(root, searchText, results, seenSongs);
         for (String result : results) {
             searchResultsModel.addElement(result);
         }
@@ -97,14 +100,18 @@ public class SearchHandler {
         }
     }
 
-    //recursive method
-    private void searchInNode(DefaultMutableTreeNode node, String searchText, List<String> results) {
+    //recursive method - modified to avoid duplicate songs from multiple playlists in result
+    private void searchInNode(DefaultMutableTreeNode node, String searchText, List<String> results, Set<String> seenSongs) {
         Object userObject = node.getUserObject();
 
         if (userObject instanceof Song) {
             Song song = (Song) userObject;
+            String songKey = song.getTitle() == null ? "" : song.getTitle().toLowerCase();
             if (song.getTitle().toLowerCase().contains(searchText)) {
-                results.add("\ud83c\udfb5 " + song.getTitle());
+                if (!seenSongs.contains(songKey)) {
+                    results.add("\ud83c\udfb5 " + song.getTitle());
+                    seenSongs.add(songKey);
+                }
             }
         } else if (userObject instanceof Playlist) {
             Playlist playlist = (Playlist) userObject;
@@ -114,7 +121,7 @@ public class SearchHandler {
         }
 
         for (int i = 0; i < node.getChildCount(); i++) {
-            searchInNode((DefaultMutableTreeNode) node.getChildAt(i), searchText, results);
+            searchInNode((DefaultMutableTreeNode) node.getChildAt(i), searchText, results, seenSongs);
         }
     }
 }
