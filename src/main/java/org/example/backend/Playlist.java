@@ -5,12 +5,13 @@ import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import org.example.backend.CsvStore;
 
 public class Playlist {
     private String name;
     private List<Song> songs;
-    private String csvHeader= "Name,Genre,Artist,Lyrics,FilePath";
     public static final String COMMA_DELIMITER = ",";//"\t";
+
     public Playlist(String name) {
         this.name = name;
         this.songs = new ArrayList<>();
@@ -40,64 +41,35 @@ public class Playlist {
     public String toString() {
         return name;
     }
-    public void writeCSV(){
-        String csvpath="src/main/resources/data/";
-        String fileName= csvpath+name;
-         try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileName))) {
-             writer.write(csvHeader+"\n");
-            for (Song s: songs) {
-                writer.write(s.toCSVString());
-                writer.newLine();
-                System.out.println("Successfully wrote to the file.");
 
-            }
-        } catch (IOException e) {
-            System.out.println("An error occurred: " + e.getMessage());
-            e.printStackTrace();
-        }
-
+    public void writeCSV() {
+        String fileName = CsvStore.DATA_DIR + name + ".csv";
+        CsvStore.writeSongsToCsv(fileName, songs);
     }
-        //writes to csv
 
-    public void readCSV(File csv){
-        //reads  csv into list
-        int cursong=0;
-        System.out.println(csv.getAbsolutePath());
-        try (BufferedReader br = new BufferedReader(new FileReader(csv))) {
-            String line;
-            //add the creation of song files
-            String header=br.readLine();//header check here
+    public void readCSV(File csv) {
+        List<Song> loaded = CsvStore.readSongsFromCsv(csv.getAbsolutePath());
+        this.songs.clear();
+        this.songs.addAll(loaded);
+    }
 
-            while ((line = br.readLine()) != null) {
-               // System.out.println(csvHeader+"oe");
-              //System.out.println("式"+line);
-                String[] values = line.split(COMMA_DELIMITER);
-
-                Song newSong=new Song(values[0],values[4]);
-                File songlocation= new File(newSong.getFilePath());
-                songlocation.mkdir();
-                songs.add(cursong,newSong);
-                cursong++;
-            }
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
 
     //songs.remove(0);
-    }
+
+
     public static void main(String[] args) {
-    File csv = new File("src/main/resources/PlaceHolder Name Songs/test.csv");
+        File csv = new File("src/main/resources/PlaceHolder Name Songs/test.csv");
         System.out.println(System.getProperty("user.dir"));
 //find out how to change directory
-    Playlist test= new Playlist("PLaylistTest");
+        Playlist test = new Playlist("PLaylistTest");
 
 
-    //test.readCSV(csv);
-         System.out.println(test.songs.toString());
-         test.writeCSV();
+        //test.readCSV(csv);
+        System.out.println(test.songs.toString());
+        test.writeCSV();
     }
 
-
 }
+
+
+
