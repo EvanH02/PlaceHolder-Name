@@ -176,7 +176,23 @@ public class PlaceHolderName extends JFrame {
         this.add(menuBar, BorderLayout.PAGE_START);
         this.revalidate();
         this.repaint();
+
+
+
+        JMenuItem sortPlaylist = new JMenuItem("Sort Playlist");
+        sortPlaylist.addActionListener(e -> {
+            SorterPlaylist sorter = new SorterPlaylist(PlaceHolderName.this, treeManager);
+            sorter.showSortDialog();
+        });
+        menuBar.add(sortPlaylist);
+
+        this.add(menuBar, BorderLayout.PAGE_START);
+        this.revalidate();
+        this.repaint();
     }
+
+
+
 
     public void setLoggedInUser(String user) {
         this.loggedInUser = user;
