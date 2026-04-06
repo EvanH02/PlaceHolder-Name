@@ -29,6 +29,36 @@ public class PlaceHolderName extends JFrame {
     private final AuthManager authManager;
     private JMenuBar menuBar;
 
+    private static class LightGradientPanel extends JPanel {
+        LightGradientPanel() { super(true); }
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            Graphics2D g2 = (Graphics2D) g.create();
+            Color c1 = new Color(220,235,255); // slightly more blue
+            Color c2 = new Color(238,245,250); // slightly more blue/near-white
+            GradientPaint gp = new GradientPaint(0, 0, c1, 0, getHeight(), c2);
+            g2.setPaint(gp);
+            g2.fillRect(0, 0, getWidth(), getHeight());
+            g2.dispose();
+        }
+    }
+
+    private static class DarkGradientPanel extends JPanel {
+        DarkGradientPanel() { super(true); }
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            Graphics2D g2 = (Graphics2D) g.create();
+            Color c1 = new Color(12,30,72); // slightly darker lyric blue
+            Color c2 = new Color(6,12,36);  // darker base
+            GradientPaint gp = new GradientPaint(0, 0, c2, 0, getHeight(), c1);
+            g2.setPaint(gp);
+            g2.fillRect(0, 0, getWidth(), getHeight());
+            g2.dispose();
+        }
+    }
+
     public PlaceHolderName(AuthManager authManager, boolean isAdmin) {
         this.authManager = authManager;
         this.isAdmin = isAdmin;
@@ -67,6 +97,8 @@ public class PlaceHolderName extends JFrame {
         this.setTitle("PlaceHolderName");
         this.setSize(700, 500);
 
+        // keep default content pane; apply gradients only to the two split areas below
+
         treeManager = new MusicTreeManager();
         songManager = new SongManager(this, treeManager);
         playlistManager = new PlaylistManager(treeManager);
@@ -91,6 +123,9 @@ public class PlaceHolderName extends JFrame {
 
         // left: JTree
         JScrollPane treeScrollPane = new JScrollPane(treeManager.getTree());
+        treeScrollPane.setOpaque(false);
+        treeScrollPane.getViewport().setOpaque(false);
+        treeManager.getTree().setOpaque(false);
 
         // right: lyrics display
         JTextArea lyricsArea = new JTextArea();
@@ -102,9 +137,20 @@ public class PlaceHolderName extends JFrame {
         lyricsArea.setWrapStyleWord(true);
         JScrollPane lyricsScroll = new JScrollPane(lyricsArea);
         lyricsScroll.setBorder(BorderFactory.createTitledBorder("Lyrics"));
+        lyricsScroll.setOpaque(false);
+        lyricsScroll.getViewport().setOpaque(false);
+        lyricsArea.setOpaque(false);
 
-        // split pane
-        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, treeScrollPane, lyricsScroll);
+        // split pane with gradient panels
+        LightGradientPanel leftPanel = new LightGradientPanel();
+        leftPanel.setLayout(new BorderLayout());
+        leftPanel.add(treeScrollPane, BorderLayout.CENTER);
+
+        DarkGradientPanel rightPanel = new DarkGradientPanel();
+        rightPanel.setLayout(new BorderLayout());
+        rightPanel.add(lyricsScroll, BorderLayout.CENTER);
+
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftPanel, rightPanel);
         splitPane.setDividerLocation(300);
         this.add(splitPane, BorderLayout.CENTER);
 
