@@ -232,11 +232,13 @@ public class SorterPlaylist {
 
         // Playlist CSVs
         File dataDir = new File(CsvStore.DATA_DIR);
+        String lyricsFileName = new File(CsvStore.LYRICS_CSV).getName();
         if (dataDir.exists() && dataDir.isDirectory()) {
             File[] files = dataDir.listFiles((dir, name) ->
                     name.toLowerCase().endsWith(".csv")
                             && !name.equalsIgnoreCase("RootSongs.csv")
-                            && !name.equalsIgnoreCase("users.csv"));
+                            && !name.equalsIgnoreCase("users.csv")
+                            && !name.equalsIgnoreCase(lyricsFileName));
             if (files != null) {
                 for (File f : files) {
                     String displayName = f.getName().replaceFirst("\\.csv$", "");

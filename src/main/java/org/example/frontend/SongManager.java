@@ -50,8 +50,12 @@ public class SongManager {
 
         List<Song> toAppend = new ArrayList<>();
         toAppend.add(s);
-        if (CsvStore.appendSongsToCsv(CsvStore.ROOT_CSV, toAppend)) {
+        boolean okSongs = CsvStore.appendSongsToCsv(CsvStore.ROOT_CSV, toAppend);
+        boolean okLyrics = CsvStore.appendLyric(CsvStore.LYRICS_CSV, s);
+        if (okSongs && okLyrics) {
             treeManager.refreshTree();
+            // ensure save
+            if (parentFrame instanceof PlaceHolderName) ((PlaceHolderName) parentFrame).saveAllFromTree();
             JOptionPane.showMessageDialog(parentFrame, "Song added to root.", "Done", JOptionPane.INFORMATION_MESSAGE);
         } else {
             JOptionPane.showMessageDialog(parentFrame, "Failed to write song.", "Error", JOptionPane.ERROR_MESSAGE);
@@ -94,8 +98,11 @@ public class SongManager {
         // gather playlist CSVs
         File dataDir = new File(CsvStore.DATA_DIR);
         List<File> playlistFiles = new ArrayList<>();
+        String lyricsFileName = new File(CsvStore.LYRICS_CSV).getName();
         if (dataDir.exists() && dataDir.isDirectory()) {
-            File[] files = dataDir.listFiles((d, name) -> name.toLowerCase().endsWith(".csv") && !name.equalsIgnoreCase("RootSongs.csv") && !name.equalsIgnoreCase("users.csv"));
+            File[] files = dataDir.listFiles((d, name) -> {
+                return name.toLowerCase().endsWith(".csv") && !name.equalsIgnoreCase("RootSongs.csv") && !name.equalsIgnoreCase("users.csv") && !name.equalsIgnoreCase(lyricsFileName);
+            });
             if (files != null) {
                 for (File f : files) playlistFiles.add(f);
             }
@@ -161,6 +168,7 @@ public class SongManager {
 
             if (CsvStore.appendSongsToCsv(destPath, selected)) {
                 treeManager.refreshTree();
+                if (parentFrame instanceof PlaceHolderName) ((PlaceHolderName) parentFrame).saveAllFromTree();
                 dialog.dispose();
                 JOptionPane.showMessageDialog(parentFrame, "Added " + selected.size() + " song(s) to \"" + chosenName + "\".", "Done", JOptionPane.INFORMATION_MESSAGE);
             } else {
@@ -197,14 +205,18 @@ public class SongManager {
             rootSongs.removeIf(s -> s.getTitle().equals(sel));
             CsvStore.writeSongsToCsv(CsvStore.ROOT_CSV, rootSongs);
             treeManager.refreshTree();
+            if (parentFrame instanceof PlaceHolderName) ((PlaceHolderName) parentFrame).saveAllFromTree();
             JOptionPane.showMessageDialog(parentFrame, "Removed from root.", "Done", JOptionPane.INFORMATION_MESSAGE);
             return;
         } else {
             // choose playlist
             File dataDir = new File(CsvStore.DATA_DIR);
             List<File> playlistFiles = new ArrayList<>();
+            String lyricsFileName = new File(CsvStore.LYRICS_CSV).getName();
             if (dataDir.exists() && dataDir.isDirectory()) {
-                File[] files = dataDir.listFiles((d, name) -> name.toLowerCase().endsWith(".csv") && !name.equalsIgnoreCase("RootSongs.csv") && !name.equalsIgnoreCase("users.csv"));
+                File[] files = dataDir.listFiles((d, name) -> {
+                    return name.toLowerCase().endsWith(".csv") && !name.equalsIgnoreCase("RootSongs.csv") && !name.equalsIgnoreCase("users.csv") && !name.equalsIgnoreCase(lyricsFileName);
+                });
                 if (files != null) for (File f : files) playlistFiles.add(f);
             }
             if (playlistFiles.isEmpty()) {
@@ -226,6 +238,7 @@ public class SongManager {
             songs.removeIf(s -> s.getTitle().equals(sel));
             CsvStore.writeSongsToCsv(path, songs);
             treeManager.refreshTree();
+            if (parentFrame instanceof PlaceHolderName) ((PlaceHolderName) parentFrame).saveAllFromTree();
             JOptionPane.showMessageDialog(parentFrame, "Removed from playlist.", "Done", JOptionPane.INFORMATION_MESSAGE);
         }
     }

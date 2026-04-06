@@ -5,16 +5,24 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 public class CsvStore {
     public static final String ROOT_CSV = "src/main/resources/data/RootSongs.csv";
     public static final String DATA_DIR = "src/main/resources/data/";
     public static final String HEADER = "Name,Genre,Artist";
+    public static final String LYRICS_CSV = DATA_DIR + "Lyrics.csv";
+    public static final String LYRICS_HEADER = "Title,Lyrics";
 
     public static List<Song> readSongsFromCsv(String path) {
         List<Song> songs = new ArrayList<>();
         File file = new File(path);
         if (!file.exists()) return songs;
+
+        // load lyrics map (if available)
+        Map<String, String> lyricsMap = readLyricsMap(LYRICS_CSV);
+
         try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
             String line = br.readLine(); // header
             while ((line = br.readLine()) != null) {
@@ -26,6 +34,10 @@ public class CsvStore {
                     Song s = new Song(name, path);
                     s.setGenre(genre);
                     s.setArtist(artist);
+                    // populate lyrics if present
+                    if (lyricsMap.containsKey(name)) {
+                        s.setLyrics(lyricsMap.get(name));
+                    }
                     songs.add(s);
                 }
             }
@@ -76,6 +88,70 @@ public class CsvStore {
         }
     }
 
+    // lyrics helpers
+    public static Map<String, String> readLyricsMap(String path) {
+        Map<String, String> map = new HashMap<>();
+        File file = new File(path);
+        if (!file.exists()) return map;
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
+            String line = br.readLine(); // header
+            while ((line = br.readLine()) != null) {
+                String[] parts = splitCsvLine(line);
+                if (parts.length >= 1) {
+                    String title = parts.length > 0 ? parts[0] : "";
+                    String lyricsEsc = parts.length > 1 ? parts[1] : "";
+                    String lyrics = unescapeNewlines(lyricsEsc);
+                    map.put(title, lyrics);
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return map;
+    }
+
+    public static synchronized boolean appendLyric(String path, Song s) {
+        File file = new File(path);
+        try {
+            file.getParentFile().mkdirs();
+            boolean writeHeader = !file.exists();
+            try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file, true), StandardCharsets.UTF_8))) {
+                if (writeHeader) {
+                    bw.write(LYRICS_HEADER);
+                    bw.newLine();
+                }
+                String lyricsEsc = escapeCsv(escapeNewlinesForCsv(nullToEmpty(s.getLyrics())));
+                bw.write(escapeCsv(s.getTitle()) + "," + lyricsEsc);
+                bw.newLine();
+            }
+            return true;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public static synchronized boolean writeLyricsMap(String path, Map<String, String> map) {
+        File file = new File(path);
+        try {
+            file.getParentFile().mkdirs();
+            try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file, false), StandardCharsets.UTF_8))) {
+                bw.write(LYRICS_HEADER);
+                bw.newLine();
+                for (Map.Entry<String, String> e : map.entrySet()) {
+                    String titleEsc = escapeCsv(e.getKey());
+                    String lyricsEsc = escapeCsv(escapeNewlinesForCsv(nullToEmpty(e.getValue())));
+                    bw.write(titleEsc + "," + lyricsEsc);
+                    bw.newLine();
+                }
+            }
+            return true;
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            return false;
+        }
+    }
+
     private static String nullToEmpty(String s) {
         return s == null ? "" : s;
     }
@@ -89,6 +165,16 @@ public class CsvStore {
             out = "\"" + out + "\"";
         }
         return out;
+    }
+
+    private static String escapeNewlinesForCsv(String s) {
+        if (s == null) return "";
+        return s.replace("\n", "\\n");
+    }
+
+    private static String unescapeNewlines(String s) {
+        if (s == null) return "";
+        return s.replace("\\n", "\n");
     }
 
     private static String[] splitCsvLine(String line) {

@@ -71,8 +71,13 @@ public class PlaylistRemover {
         List<Playlist> playlists = new ArrayList<>();
         File dataDir = new File(CsvStore.DATA_DIR);
 
+        String lyricsFileName = new File(CsvStore.LYRICS_CSV).getName();
+
         if (dataDir.exists() && dataDir.isDirectory()) {
-            File[] files = dataDir.listFiles((dir, name) -> name.toLowerCase().endsWith(".csv") && !name.equalsIgnoreCase("RootSongs.csv") && !name.equalsIgnoreCase("users.csv"));
+            File[] files = dataDir.listFiles((dir, name) -> {
+                String lower = name.toLowerCase();
+                return lower.endsWith(".csv") && !name.equalsIgnoreCase("RootSongs.csv") && !name.equalsIgnoreCase("users.csv") && !name.equalsIgnoreCase(lyricsFileName);
+            });
             if (files != null) {
                 for (File file : files) {
                     Playlist playlist = new Playlist(file.getName().replaceFirst("\\.csv$", ""));
@@ -99,10 +104,32 @@ public class PlaylistRemover {
     private void showSongRemovalDialog(Playlist playlist) {
         List<Song> songs = getSongsInPlaylist(playlist);
         if (songs.isEmpty()) {
-            JOptionPane.showMessageDialog(parentFrame,
-                    "This playlist contains no songs.",
-                    "Remove from Playlist",
-                    JOptionPane.INFORMATION_MESSAGE);
+            int choice = JOptionPane.showConfirmDialog(parentFrame,
+                    "This playlist contains no songs. Do you want to delete the playlist?",
+                    "Empty Playlist",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.QUESTION_MESSAGE);
+            if (choice == JOptionPane.YES_OPTION) {
+                File file = new File(CsvStore.DATA_DIR + playlist.getName() + ".csv");
+                boolean deleted = false;
+                try {
+                    deleted = file.delete();
+                } catch (Exception ex) {
+                    deleted = false;
+                }
+                if (deleted) {
+                    treeManager.refreshTree();
+                    JOptionPane.showMessageDialog(parentFrame,
+                            "Playlist deleted.",
+                            "Deleted",
+                            JOptionPane.INFORMATION_MESSAGE);
+                } else {
+                    JOptionPane.showMessageDialog(parentFrame,
+                            "Failed to delete playlist file.",
+                            "Error",
+                            JOptionPane.ERROR_MESSAGE);
+                }
+            }
             return;
         }
 
