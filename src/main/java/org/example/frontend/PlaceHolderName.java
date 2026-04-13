@@ -402,6 +402,10 @@ public class PlaceHolderName extends JFrame {
         this.isAdmin = admin;
     }
 
+    public boolean isAdmin() {
+        return this.isAdmin;
+    }
+
     public static void main(String[] args) {
                 AuthManager authManager = new AuthManager();
 
