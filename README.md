@@ -2,7 +2,7 @@
 
 ## Project Description
 
-This project is a simplified music streaming application that allows users to search for songs, create playlists, and manage a personal music library. The system models core features found in modern music streaming platforms while storing all data locally using CSV files. It also includes separate roles for users and administrators, where admins can manage the song database.
+This project is a simplified music streaming application that allows users to search for songs, create playlists, and manage a personal music library. The system models core features of modern music streaming platforms while storing all data locally in CSV files. It also includes separate roles for users and administrators, with admins able to manage the song database.
 
 ## Technologies Used
 
@@ -27,13 +27,15 @@ User account login and management
 
 Search and browse songs in the music library
 
+View song lyrics
+
 Create and manage playlists
 
 Play songs through a playback queue
 
-Admin controls for adding or removing songs from the system
+Sort songs and playlists alphabetically or by genre
 
-[Add On features]
+Admin controls for adding and removing songs from the system
 
 ## How to Run (Development)
 
@@ -115,9 +117,9 @@ Troubleshooting
 
 ## How to Use
 
-1. Start the app and login (the admin account is `admin` / `admin`).
-2. Admins can add songs (which are saved to the root CSV).
-3. Users can add songs to playlists via the Add-to-Playlist dialog.
+1. Start the app and log in (the admin account is `admin` / `admin`).
+2. Admins can add/remove songs (which are saved to the root CSV).
+3. Users can handle playlists via the Add-to-Playlist dialogue.
 
 ## References
 
