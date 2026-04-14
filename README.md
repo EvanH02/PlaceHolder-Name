@@ -31,8 +31,6 @@ View song lyrics
 
 Create and manage playlists
 
-Play songs through a playback queue
-
 Sort songs and playlists alphabetically or by genre
 
 Admin controls for adding and removing songs from the system
