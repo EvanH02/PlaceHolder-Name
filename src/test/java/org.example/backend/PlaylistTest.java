@@ -66,5 +66,6 @@ public class PlaylistTest {
         assertEquals(2, songsFromCSV.size());
         assertEquals("Song1", songsFromCSV.get(0).getTitle());
         assertEquals("Song2", songsFromCSV.get(1).getTitle());
+        file.delete();
     }
 }

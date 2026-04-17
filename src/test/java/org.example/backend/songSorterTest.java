@@ -36,4 +36,18 @@ public class songSorterTest {
         assertEquals("C Song", sorted.get(1).getTitle());
         assertEquals("B Song", sorted.get(2).getTitle());
     }
+    @Test
+    void testSortSongsAlphabeticallyCaseSensitive() {
+        List<Song> songs = new ArrayList<>();
+
+        songs.add(new Song("aSong", "path"));
+        songs.add(new Song("ASong", "path"));
+        songs.add(new Song("bSong", "path"));
+
+        List<Song> sorted = songSorter.sortAlphabetically(songs);
+
+        assertEquals("ASong", sorted.get(0).getTitle());
+        assertEquals("aSong", sorted.get(1).getTitle());
+        assertEquals("bSong", sorted.get(2).getTitle());
+    }
 }

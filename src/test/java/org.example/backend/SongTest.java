@@ -11,7 +11,6 @@ public class SongTest {
 
     @BeforeEach
     void setUp() {
-        // Only title and filePath are required for the constructor
         song = new Song("TestSong", "path/to/song.mp3");
     }
 
@@ -44,8 +43,7 @@ public class SongTest {
 
     @Test
     void testToCSVString() {
-        // Since genre, artist, lyrics are not set, they are null
-        String expected = "TestSong,null,null,null,path/to/song.mp3";
+        String expected = "TestSong,null,null";
         assertEquals(expected, song.toCSVString());
     }
 }

@@ -24,7 +24,7 @@ public class MusicTreeManager {
         treeModel = new DefaultTreeModel(rootNode, true);
         tree = new JTree(treeModel);
 
-        // playlists get folder icon, songs get file icon
+        // playlists get folder icon, songs get music note emoji
         tree.setCellRenderer(new DefaultTreeCellRenderer() {
             @Override
             public Component getTreeCellRendererComponent(JTree tree, Object value,
@@ -35,7 +35,8 @@ public class MusicTreeManager {
                     if (userObj instanceof Playlist) {
                         setIcon(expanded ? getOpenIcon() : getClosedIcon());
                     } else if (userObj instanceof Song) {
-                        setIcon(getLeafIcon());
+                        setText("\uD83C\uDFB5 " + ((Song) userObj).getTitle());
+                        setIcon(null);
                     }
                 }
                 return this;
@@ -63,7 +64,7 @@ public class MusicTreeManager {
 
     public DefaultMutableTreeNode buildResourceTree (){
         // root playlist from RootSongs.csv
-        Playlist rootPlaylist = new Playlist("Root");
+        Playlist rootPlaylist = new Playlist("PlaceHolder Collection");
         DefaultMutableTreeNode root = new DefaultMutableTreeNode(rootPlaylist);
         root.setAllowsChildren(true);
 
@@ -77,8 +78,11 @@ public class MusicTreeManager {
 
         // playlists from data directory (each playlist is a csv file other than RootSongs.csv and users.csv)
         File dataDir = new File(CsvStore.DATA_DIR);
+        String lyricsFileName = new File(CsvStore.LYRICS_CSV).getName();
         if (dataDir.exists() && dataDir.isDirectory()) {
-            File[] files = dataDir.listFiles((dir, name) -> name.toLowerCase().endsWith(".csv") && !name.equalsIgnoreCase("RootSongs.csv") && !name.equalsIgnoreCase("users.csv"));
+            File[] files = dataDir.listFiles((dir, name) -> {
+                return name.toLowerCase().endsWith(".csv") && !name.equalsIgnoreCase("RootSongs.csv") && !name.equalsIgnoreCase("users.csv") && !name.equalsIgnoreCase(lyricsFileName);
+            });
             if (files != null) {
                 for (File f : files) {
                     String playlistName = f.getName().replaceFirst("\\.csv$", "");

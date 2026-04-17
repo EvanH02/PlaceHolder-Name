@@ -1,13 +1,14 @@
 // Handles the search
 package org.example.frontend;
 
+import org.example.backend.CsvStore;
 import org.example.backend.Playlist;
 import org.example.backend.Song;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
 
 public class SearchHandler {
@@ -17,6 +18,7 @@ public class SearchHandler {
     private JTextField searchField;
     private DefaultListModel<String> searchResultsModel;
     private JList<String> searchResultsList;
+    private final List<Song> foundSongs = new ArrayList<>();
 
     public SearchHandler(JFrame parentFrame, MusicTreeManager treeManager) {
         this.parentFrame = parentFrame;
@@ -65,15 +67,82 @@ public class SearchHandler {
         searchResultsList.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 if (evt.getClickCount() == 2) {
-                    String selected = searchResultsList.getSelectedValue();
-                    if (selected != null && !selected.equals("No results found")) {
-                        JOptionPane.showMessageDialog(searchDialog, "Selected: " + selected);
-                    }
+                    int idx = searchResultsList.getSelectedIndex();
+                    if (idx < 0 || idx >= foundSongs.size()) return;
+                    Song song = foundSongs.get(idx);
+                    openEditDialog(searchDialog, song);
                 }
             }
         });
 
         searchDialog.setVisible(true);
+    }
+
+    // opens the edit dialog for a song
+    private void openEditDialog(JDialog owner, Song song) {
+        boolean isAdmin = false;
+        if (parentFrame instanceof PlaceHolderName) {
+            isAdmin = ((PlaceHolderName) parentFrame).isAdmin();
+        }
+
+        JTextField titleField = new JTextField(song.getTitle());
+        JTextField genreField = new JTextField(song.getGenre());
+        JTextField artistField = new JTextField(song.getArtist());
+        JTextArea editLyrics = new JTextArea(10, 30);
+        editLyrics.setText(song.getLyrics());
+
+        if (!isAdmin) {
+            titleField.setEditable(false);
+            genreField.setEditable(false);
+            artistField.setEditable(false);
+            editLyrics.setEditable(false);
+        }
+
+        JPanel panel = new JPanel(new BorderLayout(5, 5));
+        JPanel fields = new JPanel(new GridLayout(3, 2, 5, 5));
+        fields.add(new JLabel("Title:")); fields.add(titleField);
+        fields.add(new JLabel("Genre:")); fields.add(genreField);
+        fields.add(new JLabel("Artist:")); fields.add(artistField);
+        panel.add(fields, BorderLayout.NORTH);
+        panel.add(new JScrollPane(editLyrics), BorderLayout.CENTER);
+
+        String dialogTitle = isAdmin ? "Edit Song" : "Song Info";
+        int res = JOptionPane.showConfirmDialog(owner, panel, dialogTitle, JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        if (res != JOptionPane.OK_OPTION || !isAdmin) return;
+
+        String newTitle = titleField.getText().trim();
+        String newGenre = genreField.getText().trim();
+        String newArtist = artistField.getText().trim();
+        String newLyrics = editLyrics.getText();
+
+        // update root CSV
+        List<Song> rootSongs = CsvStore.readSongsFromCsv(CsvStore.ROOT_CSV);
+        for (Song s : rootSongs) {
+            if (s.getTitle().equals(song.getTitle())) {
+                s.setTitle(newTitle);
+                s.setGenre(newGenre);
+                s.setArtist(newArtist);
+                s.setLyrics(newLyrics);
+                break;
+            }
+        }
+        CsvStore.writeSongsToCsv(CsvStore.ROOT_CSV, rootSongs);
+
+        // update lyrics map
+        Map<String, String> lyricsMap = CsvStore.readLyricsMap(CsvStore.LYRICS_CSV);
+        if (!song.getTitle().equals(newTitle)) {
+            lyricsMap.remove(song.getTitle());
+        }
+        lyricsMap.put(newTitle, newLyrics);
+        CsvStore.writeLyricsMap(CsvStore.LYRICS_CSV, lyricsMap);
+
+        treeManager.refreshTree();
+        if (parentFrame instanceof PlaceHolderName) {
+            ((PlaceHolderName) parentFrame).saveAllFromTree();
+        }
+
+        // re-run search to refresh results
+        performSearch();
     }
 
     //perform search method
@@ -84,37 +153,35 @@ public class SearchHandler {
         }
 
         searchResultsModel.clear();
+        foundSongs.clear();
 
         DefaultMutableTreeNode root = treeManager.buildResourceTree();
-        List<String> results = new ArrayList<>();
-        searchInNode(root, searchText, results);
-        for (String result : results) {
-            searchResultsModel.addElement(result);
-        }
+        Set<String> seenSongs = new HashSet<>();
+        searchInNode(root, searchText, seenSongs);
 
-        if (results.isEmpty()) {
+        if (foundSongs.isEmpty()) {
             searchResultsModel.addElement("No results found");
         }
     }
 
-    //recursive method
-    private void searchInNode(DefaultMutableTreeNode node, String searchText, List<String> results) {
+    //recursive method - songs only, no playlists in results
+    private void searchInNode(DefaultMutableTreeNode node, String searchText, Set<String> seenSongs) {
         Object userObject = node.getUserObject();
 
         if (userObject instanceof Song) {
             Song song = (Song) userObject;
+            String songKey = song.getTitle() == null ? "" : song.getTitle().toLowerCase();
             if (song.getTitle().toLowerCase().contains(searchText)) {
-                results.add("\ud83c\udfb5 " + song.getTitle());
-            }
-        } else if (userObject instanceof Playlist) {
-            Playlist playlist = (Playlist) userObject;
-            if (playlist.getName().toLowerCase().contains(searchText)) {
-                results.add("\ud83d\udcc1 " + playlist.getName());
+                if (!seenSongs.contains(songKey)) {
+                    searchResultsModel.addElement("\ud83c\udfb5 " + song.getTitle());
+                    foundSongs.add(song);
+                    seenSongs.add(songKey);
+                }
             }
         }
 
         for (int i = 0; i < node.getChildCount(); i++) {
-            searchInNode((DefaultMutableTreeNode) node.getChildAt(i), searchText, results);
+            searchInNode((DefaultMutableTreeNode) node.getChildAt(i), searchText, seenSongs);
         }
     }
 }
